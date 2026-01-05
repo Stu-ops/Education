@@ -134,7 +134,7 @@ export default function TeacherVideos() {
                   <div className="aspect-video bg-gray-800 relative overflow-hidden">
                     {video.thumbnail ? (
                       <img 
-                        src={video.thumbnail} 
+                        src={`${BACKEND_URL}${video.thumbnail}`} 
                         alt={video.title}
                         className="w-full h-full object-cover"
                       />

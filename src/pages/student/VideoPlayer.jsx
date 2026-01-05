@@ -23,9 +23,12 @@ export default function VideoPlayer() {
         throw new Error('Failed to fetch video');
       }
       const data = await response.json();
+      console.log('Video data:', data);
+      console.log('Video URL will be:', `${BACKEND_URL}${data.file_path}`);
       setVideo(data);
     } catch (err) {
       setError(err.message);
+      console.error('Error fetching video:', err);
     } finally {
       setLoading(false);
     }
@@ -92,9 +95,9 @@ export default function VideoPlayer() {
                   controls
                   controlsList="nodownload"
                   className="w-full h-full"
-                  poster={video.thumbnail}
+                  poster={video.thumbnail ? `${BACKEND_URL}${video.thumbnail}` : undefined}
                 >
-                  <source src={video.file_path} type="video/mp4" />
+                  <source src={`${BACKEND_URL}${video.file_path}`} type="video/mp4" />
                   Your browser does not support HTML5 video.
                 </video>
               </div>

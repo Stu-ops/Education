@@ -12,7 +12,9 @@ export default function FeatureGrid({ onTopicClick }) {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/topics/`);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(`${BACKEND_URL}/topics/`, { headers });
         if (!res.ok) throw new Error("Failed to fetch topics");
         const data = await res.json();
         setTopics(data);

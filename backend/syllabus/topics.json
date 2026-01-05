@@ -116,5 +116,222 @@
       { "chapter": "Maps and Locations", "concept": "Understanding directions, maps, and coordinates." },
       { "chapter": "Data Through Pictures", "concept": "Interpreting and representing data using pictographs and bar graphs." }
     ]
+  },
+  "class_6": {
+    "Number System": [
+      { "chapter": "Knowing Numbers", "concept": "Understanding large numbers, place value, and number comparisons." },
+      { "chapter": "Whole Numbers", "concept": "Properties of whole numbers and operations." },
+      { "chapter": "Integers", "concept": "Introduction to positive and negative numbers." },
+      { "chapter": "Fractions", "concept": "Understanding and operating with fractions." },
+      { "chapter": "Decimals", "concept": "Understanding decimal numbers and their applications." }
+    ],
+    "Algebra": [
+      { "chapter": "Introduction to Algebra", "concept": "Understanding variables, expressions, and basic equations." },
+      { "chapter": "Basic Algebraic Expressions", "concept": "Simplifying and evaluating algebraic expressions." }
+    ],
+    "Geometry": [
+      { "chapter": "Basic Geometrical Ideas", "concept": "Understanding points, lines, planes, and angles." },
+      { "chapter": "Understanding Elementary Shapes", "concept": "Properties of 2D and 3D shapes." },
+      { "chapter": "Symmetry", "concept": "Identifying and creating symmetrical figures." }
+    ],
+    "Mensuration": [
+      { "chapter": "Perimeter", "concept": "Calculating perimeter of different shapes." },
+      { "chapter": "Area", "concept": "Understanding and calculating area of rectangles and squares." }
+    ],
+    "Data Handling": [
+      { "chapter": "Pictographs", "concept": "Representing data using pictographs." },
+      { "chapter": "Bar Graphs", "concept": "Creating and interpreting bar graphs." }
+    ],
+    "Ratio and Proportion": [
+      { "chapter": "Ratio", "concept": "Understanding ratios and their applications." },
+      { "chapter": "Proportion", "concept": "Solving problems using proportions." },
+      { "chapter": "Unitary Method", "concept": "Using unitary method to solve real-world problems." }
+    ]
+  },
+  "class_7": {
+    "Number System": [
+      { "chapter": "Integers", "concept": "Operations with positive and negative numbers." },
+      { "chapter": "Fractions and Decimals", "concept": "Advanced operations with fractions and decimals." },
+      { "chapter": "Rational Numbers", "concept": "Understanding and working with rational numbers." }
+    ],
+    "Algebra": [
+      { "chapter": "Algebraic Expressions", "concept": "Working with variables and algebraic terms." },
+      { "chapter": "Simple Equations", "concept": "Solving linear equations in one variable." }
+    ],
+    "Geometry": [
+      { "chapter": "Lines and Angles", "concept": "Understanding properties of lines, angles, and their relationships." },
+      { "chapter": "Triangles and Properties", "concept": "Exploring properties and types of triangles." },
+      { "chapter": "Congruence of Triangles", "concept": "Understanding congruence and its applications." },
+      { "chapter": "Symmetry", "concept": "Advanced concepts in symmetry and transformations." }
+    ],
+    "Mensuration": [
+      { "chapter": "Perimeter and Area", "concept": "Calculating perimeter and area of various shapes." },
+      { "chapter": "Algebraic Mensuration", "concept": "Using algebra in mensuration problems." }
+    ],
+    "Data Handling": [
+      { "chapter": "Data Collection", "concept": "Methods of collecting and organizing data." },
+      { "chapter": "Bar Graphs", "concept": "Advanced bar graph interpretation." },
+      { "chapter": "Probability", "concept": "Basic introduction to probability concepts." }
+    ],
+    "Ratio and Percentage": [
+      { "chapter": "Ratio", "concept": "Advanced ratio problems." },
+      { "chapter": "Proportion", "concept": "Direct and inverse proportions." },
+      { "chapter": "Percentage", "concept": "Understanding and calculating percentages." },
+      { "chapter": "Profit and Loss", "concept": "Applying percentages to profit and loss." },
+      { "chapter": "Simple Interest", "concept": "Calculating simple interest in financial problems." }
+    ]
+  },
+  "class_8": {
+    "Number System": [
+      { "chapter": "Rational Numbers", "concept": "Properties and operations with rational numbers." },
+      { "chapter": "Exponents and Powers", "concept": "Understanding laws of exponents." },
+      { "chapter": "Squares and Square Roots", "concept": "Calculating squares and square roots." },
+      { "chapter": "Cubes and Cube Roots", "concept": "Calculating cubes and cube roots." }
+    ],
+    "Algebra": [
+      { "chapter": "Linear Equations", "concept": "Solving linear equations in one and two variables." },
+      { "chapter": "Factorisation", "concept": "Factoring algebraic expressions." },
+      { "chapter": "Algebraic Identities", "concept": "Using identities to simplify expressions." }
+    ],
+    "Geometry": [
+      { "chapter": "Understanding Quadrilaterals", "concept": "Properties of different types of quadrilaterals." },
+      { "chapter": "Polygons", "concept": "Understanding properties of polygons." },
+      { "chapter": "Practical Geometry", "concept": "Constructing geometric shapes using tools." }
+    ],
+    "Mensuration": [
+      { "chapter": "Area of Parallelogram and Triangle", "concept": "Deriving and applying area formulas." },
+      { "chapter": "Surface Area and Volume", "concept": "Calculating surface area and volume of 3D shapes." }
+    ],
+    "Data Handling": [
+      { "chapter": "Frequency Tables", "concept": "Creating and interpreting frequency distributions." },
+      { "chapter": "Bar Graphs", "concept": "Advanced bar graph creation and analysis." },
+      { "chapter": "Pie Charts", "concept": "Creating and interpreting pie charts." }
+    ],
+    "Direct and Inverse Variation": [
+      { "chapter": "Direct Variation", "concept": "Understanding directly proportional relationships." },
+      { "chapter": "Inverse Variation", "concept": "Understanding inversely proportional relationships." }
+    ]
+  },
+  "class_9": {
+    "Number System": [
+      { "chapter": "Real Numbers", "concept": "Understanding irrational numbers and properties of real numbers." }
+    ],
+    "Algebra": [
+      { "chapter": "Polynomials", "concept": "Understanding polynomials and their operations." },
+      { "chapter": "Linear Equations in Two Variables", "concept": "Solving systems of linear equations." }
+    ],
+    "Coordinate Geometry": [
+      { "chapter": "Cartesian Plane", "concept": "Understanding coordinate systems." },
+      { "chapter": "Plotting Points", "concept": "Graphing points and linear equations." }
+    ],
+    "Geometry": [
+      { "chapter": "Lines and Angles", "concept": "Advanced concepts in angles and parallel lines." },
+      { "chapter": "Triangles", "concept": "Properties and theorems related to triangles." },
+      { "chapter": "Quadrilaterals", "concept": "Properties of different quadrilaterals." },
+      { "chapter": "Circles", "concept": "Understanding circles, chords, and tangents." },
+      { "chapter": "Constructions", "concept": "Geometric constructions using compass and ruler." }
+    ],
+    "Mensuration": [
+      { "chapter": "Areas of Parallelograms and Triangles", "concept": "Deriving area formulas for various shapes." },
+      { "chapter": "Surface Area and Volume", "concept": "Calculating surface area and volume of 3D objects." }
+    ],
+    "Statistics and Probability": [
+      { "chapter": "Statistics", "concept": "Collection and representation of data." },
+      { "chapter": "Probability", "concept": "Introduction to basic probability concepts." }
+    ]
+  },
+  "class_10": {
+    "Number System": [
+      { "chapter": "Real Numbers", "concept": "Euclid's division lemma and properties of irrational numbers." }
+    ],
+    "Algebra": [
+      { "chapter": "Polynomials", "concept": "Advanced polynomial operations and theorems." },
+      { "chapter": "Pair of Linear Equations", "concept": "Solving systems of linear equations in two variables." },
+      { "chapter": "Quadratic Equations", "concept": "Solving quadratic equations and applications." },
+      { "chapter": "Arithmetic Progressions", "concept": "Understanding and working with AP sequences." }
+    ],
+    "Coordinate Geometry": [
+      { "chapter": "Distance Formula", "concept": "Calculating distance between two points." },
+      { "chapter": "Section Formula", "concept": "Finding coordinates of points dividing a line segment." },
+      { "chapter": "Area of Triangle", "concept": "Using coordinates to find area." }
+    ],
+    "Geometry": [
+      { "chapter": "Triangles", "concept": "Similarity and congruence of triangles." },
+      { "chapter": "Circles", "concept": "Properties of circles, tangents, and theorems." },
+      { "chapter": "Constructions", "concept": "Advanced geometric constructions." }
+    ],
+    "Mensuration": [
+      { "chapter": "Surface Area and Volume", "concept": "Advanced problems on 3D shapes." }
+    ],
+    "Trigonometry": [
+      { "chapter": "Introduction to Trigonometry", "concept": "Understanding trigonometric ratios." },
+      { "chapter": "Trigonometric Ratios", "concept": "Solving problems using trigonometric ratios." },
+      { "chapter": "Applications of Trigonometry", "concept": "Real-world applications like heights and distances." }
+    ],
+    "Statistics and Probability": [
+      { "chapter": "Mean, Median, Mode", "concept": "Measures of central tendency." },
+      { "chapter": "Probability", "concept": "Advanced probability concepts." }
+    ]
+  },
+  "class_11": {
+    "Sets and Logic": [
+      { "chapter": "Sets", "concept": "Understanding set theory and operations." },
+      { "chapter": "Relations", "concept": "Types of relations and their properties." },
+      { "chapter": "Functions", "concept": "Understanding functions and their types." },
+      { "chapter": "Mathematical Reasoning", "concept": "Logical reasoning and mathematical proofs." }
+    ],
+    "Algebra": [
+      { "chapter": "Complex Numbers", "concept": "Understanding complex numbers and operations." },
+      { "chapter": "Quadratic Equations", "concept": "Advanced quadratic equations and applications." },
+      { "chapter": "Sequences and Series", "concept": "Arithmetic and geometric progressions." },
+      { "chapter": "Binomial Theorem", "concept": "Binomial expansion and applications." },
+      { "chapter": "Permutations and Combinations", "concept": "Counting principles and combinatorics." }
+    ],
+    "Coordinate Geometry": [
+      { "chapter": "Straight Lines", "concept": "Equations of lines and their properties." },
+      { "chapter": "Conic Sections", "concept": "Understanding parabola, ellipse, and hyperbola." },
+      { "chapter": "3D Geometry", "concept": "Introduction to three-dimensional coordinate geometry." }
+    ],
+    "Trigonometry": [
+      { "chapter": "Trigonometric Functions", "concept": "Understanding trigonometric functions and identities." },
+      { "chapter": "Inverse Trigonometric Functions", "concept": "Properties and applications of inverse trigonometric functions." }
+    ],
+    "Calculus": [
+      { "chapter": "Limits", "concept": "Understanding limits and continuity." },
+      { "chapter": "Derivatives", "concept": "Introduction to differentiation." }
+    ],
+    "Statistics and Probability": [
+      { "chapter": "Statistics", "concept": "Data analysis and interpretation." },
+      { "chapter": "Probability", "concept": "Advanced probability theory." }
+    ]
+  },
+  "class_12": {
+    "Algebra": [
+      { "chapter": "Matrices", "concept": "Matrix operations and applications." },
+      { "chapter": "Determinants", "concept": "Properties and applications of determinants." }
+    ],
+    "Calculus": [
+      { "chapter": "Continuity and Differentiability", "concept": "Advanced concepts in differentiation." },
+      { "chapter": "Applications of Derivatives", "concept": "Rate of change, maxima, and minima." },
+      { "chapter": "Integrals", "concept": "Integration techniques and methods." },
+      { "chapter": "Applications of Integrals", "concept": "Area under curves and real-world applications." },
+      { "chapter": "Differential Equations", "concept": "Solving differential equations." }
+    ],
+    "Vector and 3D Geometry": [
+      { "chapter": "Vectors", "concept": "Vector operations and applications." },
+      { "chapter": "Three Dimensional Geometry", "concept": "3D coordinate geometry and equations of planes and lines." }
+    ],
+    "Probability": [
+      { "chapter": "Conditional Probability", "concept": "Understanding conditional probability and Bayes' theorem." },
+      { "chapter": "Random Variables and Distribution", "concept": "Probability distributions and expected values." }
+    ],
+    "Linear Programming": [
+      { "chapter": "Linear Programming Problems", "concept": "Optimization using linear programming." }
+    ],
+    "Relations and Functions": [
+      { "chapter": "Functions", "concept": "Advanced function concepts and types." },
+      { "chapter": "Binary Operations", "concept": "Understanding binary operations." },
+      { "chapter": "Inverse Trigonometric Functions", "concept": "Advanced properties and applications." }
+    ]
   }
 }
