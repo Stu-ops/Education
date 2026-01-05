@@ -205,6 +205,66 @@ export const TeacherProvider = ({ children }) => {
     }
   };
 
+  const uploadMultipleFiles = async (formData) => {
+    try {
+      const token = await storage.getItem('teacherToken');
+      const response = await fetch(`${BACKEND_URL}/teachers/upload/multiple`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Multiple upload failed');
+      }
+
+      const data = await response.json();
+      await fetchTeacherProfile(token);
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const getUploadInfo = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/teachers/upload/info`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to get upload info');
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const getTeacherFiles = async (fileType = null) => {
+    try {
+      const token = await storage.getItem('teacherToken');
+      const url = fileType 
+        ? `${BACKEND_URL}/teachers/files?file_type=${fileType}`
+        : `${BACKEND_URL}/teachers/files`;
+      
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to get files');
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     teacher,
     loading,
@@ -215,6 +275,9 @@ export const TeacherProvider = ({ children }) => {
     addStudent,
     removeStudent,
     uploadContent,
+    uploadMultipleFiles,
+    getUploadInfo,
+    getTeacherFiles,
     fetchTeacherProfile,
     fetchStudents
   };

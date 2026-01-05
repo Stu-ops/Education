@@ -81,17 +81,28 @@ export function UserProvider({ children }) {
     const token = await storage.getItem('token');
     if (!user || !token) return null;
 
-    const payload = {
-      ...updates,
-      class_level: updates.classLevel,
-    };
+    try {
+      const payload = {
+        ...updates,
+        // Ensure class_level is properly mapped
+        class_level: updates.class_level || updates.classLevel,
+      };
 
-    delete payload.classLevel;
+      // Remove any frontend-only fields
+      delete payload.classLevel;
 
-    const updated = await saveUser(payload, token);
-    if (updated) setUser(updated);
-
-    return updated;
+      console.log('Updating user with payload:', payload);
+      
+      const updated = await saveUser(payload, token);
+      if (updated) {
+        setUser(updated);
+        return updated;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error in updateUser:', error);
+      return null;
+    }
   };
 
   const logout = async () => {

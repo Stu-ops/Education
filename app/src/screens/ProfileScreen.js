@@ -32,7 +32,13 @@ export default function ProfileScreen() {
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    if (user) setForm(user);
+    if (user) {
+      // Map backend field names to form field names
+      setForm({
+        ...user,
+        classLevel: user.class_level || user.classLevel,
+      });
+    }
   }, [user]);
 
   // Animated counter effect
@@ -100,12 +106,31 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     setSaving(true);
-    const updated = await updateUser(form);
-    if (updated) {
-      setEditing(false);
-      hasAnimated.current = false;
+    try {
+      // Prepare the update payload with proper field mapping
+      const updatePayload = {
+        ...form,
+        class_level: form.classLevel, // Map classLevel to class_level for backend
+      };
+      
+      // Remove the frontend field name
+      delete updatePayload.classLevel;
+      
+      const updated = await updateUser(updatePayload);
+      if (updated) {
+        setEditing(false);
+        hasAnimated.current = false;
+        // Update form with the returned data
+        setForm({
+          ...updated,
+          classLevel: updated.class_level || updated.classLevel,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleLogout = async () => {
@@ -160,16 +185,29 @@ export default function ProfileScreen() {
             
             {!editing ? (
               <Text style={styles.userInfo}>
-                {form?.classLevel || user?.classLevel} · Level {form?.level || user?.level}
+                {form?.classLevel || user?.class_level || user?.classLevel} · Level {form?.level || user?.level}
               </Text>
             ) : (
               <View style={styles.editForm}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Name:</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={form?.name || ''}
+                    onChangeText={(v) => handleChange('name', v)}
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    placeholder="Enter your name"
+                  />
+                </View>
+
                 <TouchableOpacity
                   style={styles.inputContainer}
                   onPress={() => setShowClassPicker(true)}
                 >
                   <Text style={styles.inputLabel}>Class:</Text>
-                  <Text style={styles.inputValue}>{form?.classLevel || 'Select class'}</Text>
+                  <View style={styles.inputValue}>
+                    <Text style={styles.inputValueText}>{form?.classLevel || 'Select class'}</Text>
+                  </View>
                 </TouchableOpacity>
 
                 <View style={styles.inputContainer}>
@@ -493,6 +531,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  inputValueText: {
     color: '#1F2937',
     fontSize: 16,
   },
@@ -649,7 +690,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
   pickerItemSelected: {
-    backgroundColor: colors.primary.blue,
+    backgroundColor: '#3B82F6',
   },
   pickerItemText: {
     color: '#FFFFFF',
