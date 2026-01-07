@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+import logging
 from models.schemas import (
     TeacherCreate, TeacherLogin, TeacherOut, TeacherUpdate,
     VideoCreate, VideoOut, VideoDetail, TeacherWithVideos,
@@ -7,12 +9,14 @@ from models.schemas import (
 )
 from models.models import Teacher, Video, TeacherStudent, User
 from helper import get_db
-from auth import create_access_token, verify_token
+from auth import create_access_token, verify_token, hash_password, verify_password
 from datetime import timedelta, datetime
 import os
 import shutil
 from pathlib import Path
 from typing import List
+
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/teachers", tags=["teachers"])
 
 # Directory for storing uploaded files
@@ -78,13 +82,13 @@ def detect_file_type(filename: str) -> str:
 def validate_and_save_file(file: UploadFile, file_type: str, teacher_id: int) -> tuple:
     """Validate file and save to appropriate directory"""
     try:
-        print(f"DEBUG: Validating file - type: {file_type}, filename: {file.filename}")
+        logger.debug(f"Validating file - type: {file_type}, filename: {file.filename}")
         
         config = FILE_TYPE_CONFIG[file_type]
         
         # Validate file extension
         file_ext = os.path.splitext(file.filename)[1].lower()
-        print(f"DEBUG: File extension: {file_ext}")
+        logger.debug(f"File extension: {file_ext}")
         
         if file_ext not in config['extensions']:
             raise HTTPException(
@@ -92,10 +96,13 @@ def validate_and_save_file(file: UploadFile, file_type: str, teacher_id: int) ->
                 detail=f"Invalid {file_type} format. Allowed: {', '.join(config['extensions'])}"
             )
 
-        # Read and validate file size
-        file_content = file.file.read()
-        file_size = len(file_content)
-        print(f"DEBUG: File size: {file_size} bytes")
+        # Check file size efficiently without reading entire file into memory
+        # For UploadFile (SpooledTemporaryFile), we can check the size directly
+        file.file.seek(0, 2)  # Seek to end of file
+        file_size = file.file.tell()  # Get file size
+        file.file.seek(0)  # Reset to beginning for reading
+        
+        logger.debug(f"File size: {file_size} bytes")
         
         if file_size > config['max_size']:
             raise HTTPException(
@@ -107,27 +114,33 @@ def validate_and_save_file(file: UploadFile, file_type: str, teacher_id: int) ->
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         filename = f"{teacher_id}_{timestamp}_{file_type}{file_ext}"
         file_path = config['directory'] / filename
-        print(f"DEBUG: Saving to: {file_path}")
+        logger.debug(f"Saving to: {file_path}")
 
-        # Save file
+        # Save file efficiently using chunks to handle large files
         try:
             with open(file_path, "wb") as f:
-                f.write(file_content)
-            print(f"DEBUG: File saved successfully")
+                # Read and write in chunks to avoid memory issues with large files
+                chunk_size = 8192  # 8KB chunks
+                while True:
+                    chunk = file.file.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            logger.info(f"File saved successfully: {filename}")
         except Exception as e:
-            print(f"DEBUG: Error saving file: {e}")
+            logger.error(f"Error saving file: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to save {file_type}: {str(e)}")
 
         # Return public URL path and file size
         public_url_path = f"{config['url_prefix']}{filename}"
-        print(f"DEBUG: Public URL: {public_url_path}")
+        logger.debug(f"Public URL: {public_url_path}")
         return public_url_path, file_size
         
     except HTTPException as e:
-        print(f"DEBUG: HTTPException in validate_and_save_file: {e.detail}")
+        logger.debug(f"HTTPException in validate_and_save_file: {e.detail}")
         raise e
     except Exception as e:
-        print(f"DEBUG: Unexpected error in validate_and_save_file: {str(e)}")
+        logger.error(f"Unexpected error in validate_and_save_file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"File validation failed: {str(e)}")
 
 
@@ -142,7 +155,7 @@ def register_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
 
     new_teacher = Teacher(
         username=teacher.username,
-        password=teacher.password,  # plain text for demo (use hashing in production)
+        password=hash_password(teacher.password),  # Hash password for security
         name=teacher.name or teacher.username,
         email=teacher.email,
         phone_number=teacher.phone_number,
@@ -153,20 +166,78 @@ def register_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
     db.add(new_teacher)
     db.commit()
     db.refresh(new_teacher)
+    logger.info(f"New teacher registered: {teacher.username}")
     return new_teacher
+
+
+@router.post("/token")
+def get_teacher_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """OAuth2-compliant token endpoint for teacher authentication."""
+    db_teacher = db.query(Teacher).filter(Teacher.username == form_data.username).first()
+    if not db_teacher:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    is_valid = False
+    if db_teacher.password.startswith("$2b$"):
+        is_valid = verify_password(form_data.password, db_teacher.password)
+    else:
+        is_valid = (db_teacher.password == form_data.password)
+        if is_valid:
+            logger.info(f"Upgrading plain text password to hashed for teacher: {form_data.username}")
+            db_teacher.password = hash_password(form_data.password)
+            db.commit()
+    
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={"sub": db_teacher.username},
+        expires_delta=timedelta(hours=24),
+    )
+    logger.info(f"Token generated for teacher (OAuth2): {form_data.username}")
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 
 @router.post("/login")
 def teacher_login(data: TeacherLogin, db: Session = Depends(get_db)):
     """Login teacher and return access token"""
     db_teacher = db.query(Teacher).filter(Teacher.username == data.username).first()
-    if not db_teacher or db_teacher.password != data.password:
+    if not db_teacher:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Support both hashed and plain text passwords for backward compatibility
+    is_valid = False
+    if db_teacher.password.startswith("$2b$"):
+        # Hashed password - use verify_password
+        is_valid = verify_password(data.password, db_teacher.password)
+    else:
+        # Plain text password (legacy) - direct comparison
+        is_valid = (db_teacher.password == data.password)
+        # Optionally upgrade to hashed password on successful login
+        if is_valid:
+            logger.info(f"Upgrading plain text password to hashed for teacher: {data.username}")
+            db_teacher.password = hash_password(data.password)
+            db.commit()
+    
+    if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token(
         data={"sub": db_teacher.username},
         expires_delta=timedelta(hours=24),
     )
+    logger.info(f"Teacher logged in: {data.username}")
     return {
         "access_token": access_token,
         "token_type": "bearer",

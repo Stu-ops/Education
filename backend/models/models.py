@@ -35,7 +35,7 @@ class Chat(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
-    session_id = Column(String, index=True, nullable=True)  # belongs to chat
+    session_id = Column(String, index=True, nullable=True, unique=True)  # indexed and unique for performance
 
     messages = relationship("Message", back_populates="chat", cascade="all, delete")
 
@@ -48,8 +48,8 @@ class Message(Base):
     image = Column(Text, nullable=True)
     sender = Column(String, nullable=False)  # "user" or "bot"
     
-    chat_id = Column(Integer, ForeignKey("chats.id"))
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # <-- new
+    chat_id = Column(Integer, ForeignKey("chats.id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # indexed for performance
     chat = relationship("Chat", back_populates="messages")
 
 

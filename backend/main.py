@@ -1,4 +1,5 @@
 import sys
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -9,6 +10,17 @@ from sqlalchemy import text
 import os
 import re
 from typing import Optional
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('backend.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Ensure the backend directory is on sys.path so imports like `from routers import ...`
 # work whether uvicorn is started from the repo root (uvicorn backend.main:app)
@@ -41,11 +53,11 @@ def ensure_streak_columns():
             for s in stmts:
                 conn.execute(text(s))
             if stmts:
-                print(f"DB migration applied: added columns -> {stmts}", flush=True)
+                logger.info(f"DB migration applied: added columns -> {stmts}")
         finally:
             conn.close()
     except Exception as e:
-        print(f"DB migration error (non-fatal): {e}", flush=True)
+        logger.error(f"DB migration error (non-fatal): {e}")
 
 
 # Ensure schema exists and run lightweight migrations
@@ -54,10 +66,21 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Get allowed origins from environment variable (comma-separated)
+# Default to localhost for development, but warn if using wildcard in production
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173")
+if allowed_origins_str == "*":
+    logger.warning("CORS configured with wildcard (*) - this should only be used in development!")
+    allowed_origins = ["*"]
+else:
+    allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+logger.info(f"CORS allowed origins: {allowed_origins}")
+
 # Add CORS middleware first
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

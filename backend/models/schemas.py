@@ -1,29 +1,45 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from typing import List, Optional
-
-from pydantic import BaseModel
-from typing import Optional, List
+import re
 
 class UserBase(BaseModel):
-    username: str
-    name: Optional[str] = None
-    level: Optional[int] = 1
+    username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
+    name: Optional[str] = Field(None, max_length=100)
+    level: Optional[int] = Field(1, ge=1, le=12)
     email: Optional[str] = None
     avatar: Optional[str] = None
     class_level: Optional[str] = None
-    age: Optional[int] = None
-    school: Optional[str] = None
+    age: Optional[int] = Field(None, ge=5, le=100)
+    school: Optional[str] = Field(None, max_length=200)
     # Backend-only tracking (exposed read-only in responses)
     total_attempts: Optional[int] = 0
     correct_attempts: Optional[int] = 0
     score: Optional[float] = 0.0
     Parent_feedback: Optional[str] = None  # Parent feedback for this student
 
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        if v is not None and v.strip():
+            # Basic email validation
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', v):
+                raise ValueError('Invalid email format')
+        return v
+    
+    @field_validator('class_level')
+    @classmethod
+    def validate_class_level(cls, v):
+        if v is not None and v.strip():
+            # Allow formats like: 'class_5', '5', 'Class 5', 'Grade 5'
+            if not re.match(r'^(class_?|grade\s?)?\d{1,2}$', v, re.IGNORECASE):
+                raise ValueError('Invalid class_level format. Use: class_5, 5, Class 5, or Grade 5')
+        return v
+
     class Config:
         from_attributes = True  # Updated from orm_mode for Pydantic V2
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=6, max_length=100)
 
 class UserLogin(BaseModel):
     username: str

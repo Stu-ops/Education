@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException ,Header
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+import logging
 from models.schemas import Message as MessageSchema, Chat as ChatSchema
 from models.models import Chat, Message,User
 from helper import get_db
@@ -9,7 +10,7 @@ import os, json
 from pathlib import Path
 import llm
 
-
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 # Read from environment: True → user must be logged in, False → guest allowed
@@ -136,7 +137,7 @@ def send_message_instant(
                     parent_feedback=getattr(user, "Parent_feedback", None),
             )
 
-        print(bot_text)
+        logger.info(f"Generated bot response for send_message_instant")
 
         # --- Save bot reply ---
         bot_msg = Message(
@@ -157,7 +158,7 @@ def send_message_instant(
         }
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"Error in send_message_instant: {e}", exc_info=True)
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -246,7 +247,7 @@ def send_message_by_username(
        
         #try
         # bot_text=llm.generate_hint(message.text)
-        print(bot_text)
+        logger.info(f"Generated bot response for user {username}")
 
 
         # --- Save bot reply ---
@@ -262,7 +263,7 @@ def send_message_by_username(
         return chat
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"Error in send_message_by_username: {e}", exc_info=True)
         db.rollback()
         raise e
 
@@ -382,7 +383,7 @@ def check_message_instant(
 
             # Ask LLM to detect if final + correct
             judge = llm.check_answer(conversation=conversation, class_topics=topics)
-            print("Judge output:", judge, flush=True)
+            logger.debug(f"Judge output: {judge}")
 
             if isinstance(judge, dict):
                 if judge.get("final"):
@@ -391,7 +392,7 @@ def check_message_instant(
                         is_correct = bool(judge.get("correct"))
 
                         if is_correct:
-                            print("✅ correct answer (atomic update)", flush=True)
+                            logger.info(f"Correct answer detected for user {user_id} (atomic update)")
                             db.query(User).filter(User.id == user_id).update(
                                 {
                                     User.total_attempts: (User.total_attempts + 1),
@@ -401,7 +402,7 @@ def check_message_instant(
                                 synchronize_session=False,
                             )
                         else:
-                            print("❌ incorrect answer (atomic update)", flush=True)
+                            logger.info(f"Incorrect answer detected for user {user_id} (atomic update)")
                             db.query(User).filter(User.id == user_id).update(
                                 {
                                     User.total_attempts: (User.total_attempts + 1),
@@ -422,16 +423,16 @@ def check_message_instant(
 
                             # Log resulting values for verification
                             if u_after:
-                                print(
-                                    f"ℹ️ Post-update user id={user_id} -> total_attempts={u_after.total_attempts}, correct_attempts={u_after.correct_attempts}, score={u_after.score}",
-                                    flush=True,
+                                logger.debug(
+                                    f"Post-update user id={user_id} -> total_attempts={u_after.total_attempts}, "
+                                    f"correct_attempts={u_after.correct_attempts}, score={u_after.score}"
                                 )
                             else:
-                                print(f"⚠️ User id={user_id} not found after update", flush=True)
+                                logger.warning(f"User id={user_id} not found after update")
                         except Exception as requery_err:
                             # Non-fatal: log and continue
                             db.rollback()
-                            print(f"⚠️ Could not re-query/normalize user id={user_id} after commit: {requery_err}", flush=True)
+                            logger.warning(f"Could not re-query/normalize user id={user_id} after commit: {requery_err}")
 
                         # Update streaks based on correctness: maintain current_streak and max_streak
                         try:
@@ -461,15 +462,15 @@ def check_message_instant(
                                     db.commit()
                         except Exception as streak_err:
                             db.rollback()
-                            print(f"⚠️ Could not update streaks for user id={user_id}: {streak_err}", flush=True)
+                            logger.warning(f"Could not update streaks for user id={user_id}: {streak_err}")
                     except Exception as commit_err:
                         db.rollback()
-                        print(f"❗ Failed to apply atomic user update for id={user_id}: {commit_err}", flush=True)
+                        logger.error(f"Failed to apply atomic user update for id={user_id}: {commit_err}")
                 else:
-                    print("🕐 Not a final answer yet", flush=True)
+                    logger.debug("Not a final answer yet")
 
         except Exception as e:
-            print("⚠️ Answer-check skipped due to error:", e, flush=True)
+            logger.warning(f"Answer-check skipped due to error: {e}")
 
         # ------------------------------------------
         #  2️⃣ Generate bot’s reply (LLM Hint)
@@ -508,7 +509,7 @@ def check_message_instant(
                 parent_feedback=getattr(user, "Parent_feedback", None),
             )
 
-        print(bot_text)
+        logger.info(f"Generated bot response for user {username}")
 
         # --- Save bot reply ---
         bot_msg = Message(

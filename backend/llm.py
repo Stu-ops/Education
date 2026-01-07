@@ -1,9 +1,10 @@
 import os
 import json, re
+import logging
 from dotenv import load_dotenv
 from litellm import completion
 
-
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 MODEL_NAME = "gemini/gemini-2.5-flash"  # format for LiteLLM Gemini
@@ -137,21 +138,11 @@ def generate_hint(question: str,  last_context: str = "", image_b64 :str | None 
     Returns:
         The LLM's reply string.    """
 
+    # Import helper locally to avoid circular imports
+    from helper import normalize_class_to_number
+    
     # Normalize/parse user_class into an integer class number used by prompt loader
-    def _class_to_number(c):
-        if c is None:
-            return 5
-        try:
-            if isinstance(c, int):
-                return int(c)
-            s = str(c).strip()
-            if s.startswith("class_"):
-                s = s.split("_", 1)[1]
-            return int(s)
-        except Exception:
-            return 5
-
-    class_number = _class_to_number(user_class)
+    class_number = normalize_class_to_number(user_class)
     system_prompt = load_prompt_for_class(class_number)
 
     # Build message content and include the student class in the prompt
@@ -250,7 +241,7 @@ Output format (must match exactly):
         text = response["choices"][0]["message"]["content"].strip()
 
         # Debug: log raw output so we can inspect failure cases
-        print("🛈 check_answer raw output:", repr(text[:2000]))
+        logger.debug(f"check_answer raw output: {repr(text[:2000])}")
 
         # Remove fenced code blocks (```json ... ``` or ``` ... ```)
         m_code = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.S | re.I)
@@ -291,14 +282,14 @@ Output format (must match exactly):
                 result = json.loads(san)
                 return result
             except Exception as e2:
-                print("⚠️ check_answer parse retry failed:", e2)
-                print("🛈 final sanitized attempt contents:", repr(san[:2000]))
+                logger.warning(f"check_answer parse retry failed: {e2}")
+                logger.debug(f"final sanitized attempt contents: {repr(san[:2000])}")
 
         # If parsing ultimately failed, return a safe structured response with raw feedback
         return {"final": False, "correct": False, "feedback": "Error or invalid JSON", "raw": text}
 
     except Exception as e:
-        print("⚠️ check_answer error:", e)
+        logger.error(f"check_answer error: {e}")
         return {"final": False, "correct": False, "feedback": "Error or invalid JSON"}
 
 

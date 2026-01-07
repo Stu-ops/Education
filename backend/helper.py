@@ -1,4 +1,5 @@
 # deps.py
+import logging
 from database import SessionLocal
 from sqlalchemy.orm import Session
 from fastapi import Request, Depends
@@ -8,6 +9,9 @@ import re
 
 from models.models import User
 from auth import SECRET_KEY, ALGORITHM
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 def get_db():
@@ -103,5 +107,63 @@ def get_user_class_number(request: Request, db: Session = Depends(get_db)) -> in
     level = info.get("level")
     try:
         return int(level)
+    except Exception:
+        return 5
+
+
+def get_user_class_number_by_username(username: str, db: Session) -> int:
+    """Return the numeric class for the given username by looking up the User in the DB.
+
+    - If the user has `class_level` like 'class_5' or '5', the numeric portion is returned.
+    - Else falls back to the `level` integer column.
+    - Defaults to 5 when missing or on error.
+    """
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return 5
+
+        # Prefer class_level if present
+        raw = getattr(user, "class_level", None)
+        if raw and isinstance(raw, str):
+            # extract digits from strings like 'class_5' or 'Grade 5' or '5'
+            digits = "".join(c for c in raw if c.isdigit())
+            if digits:
+                try:
+                    return int(digits)
+                except Exception:
+                    pass
+
+        # Fall back to level column
+        lvl = getattr(user, "level", None)
+        if lvl is not None:
+            try:
+                return int(lvl)
+            except Exception:
+                pass
+
+        return 5
+    except Exception as e:
+        logger.error(f"Error resolving class number for user {username}: {e}")
+        return 5
+
+
+def normalize_class_to_number(class_input) -> int:
+    """Normalize various class input formats to integer.
+    
+    Handles: int (5), string ('5'), class_level ('class_5'), etc.
+    Returns: int (defaults to 5 on error)
+    """
+    if class_input is None:
+        return 5
+    try:
+        if isinstance(class_input, int):
+            return int(class_input)
+        s = str(class_input).strip()
+        if s.startswith("class_"):
+            s = s.split("_", 1)[1]
+        # Extract digits
+        digits = "".join(c for c in s if c.isdigit())
+        return int(digits) if digits else 5
     except Exception:
         return 5

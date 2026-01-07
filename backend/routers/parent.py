@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+import logging
 from models.schemas import (
     ParentCreate,
     ParentLogin,
@@ -11,7 +13,7 @@ from models.schemas import (
 )
 from models.models import Parent, User
 from helper import get_db
-from auth import create_access_token, verify_token
+from auth import create_access_token, verify_token, hash_password, verify_password
 from datetime import timedelta
 from sqlalchemy import func
 from llm import generate_parent_report
@@ -27,6 +29,8 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/parents", tags=["parents"])
 
@@ -80,7 +84,7 @@ def register_parent(data: ParentCreate, db: Session = Depends(get_db)):
 
     p = Parent(
         username=data.username,
-        password=data.password,
+        password=hash_password(data.password),  # Hash password for security
         name=data.name,
         phone_number=data.phone_number,
         student_username=data.student_username,
@@ -88,19 +92,74 @@ def register_parent(data: ParentCreate, db: Session = Depends(get_db)):
     db.add(p)
     db.commit()
     db.refresh(p)
+    logger.info(f"New parent registered: {data.username}")
     return p
+
+
+@router.post("/token")
+def get_parent_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """OAuth2-compliant token endpoint for parent authentication."""
+    db_parent = db.query(Parent).filter(Parent.username == form_data.username).first()
+    if not db_parent:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    is_valid = False
+    if db_parent.password.startswith("$2b$"):
+        is_valid = verify_password(form_data.password, db_parent.password)
+    else:
+        is_valid = (db_parent.password == form_data.password)
+        if is_valid:
+            logger.info(f"Upgrading plain text password to hashed for parent: {form_data.username}")
+            db_parent.password = hash_password(form_data.password)
+            db.commit()
+    
+    if not is_valid:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={"sub": db_parent.username},
+        expires_delta=timedelta(hours=1),
+    )
+    logger.info(f"Token generated for parent (OAuth2): {form_data.username}")
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/login")
 def login_parent(data: ParentLogin, db: Session = Depends(get_db)):
     db_parent = db.query(Parent).filter(Parent.username == data.username).first()
-    if not db_parent or db_parent.password != data.password:
+    if not db_parent:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Support both hashed and plain text passwords for backward compatibility
+    is_valid = False
+    if db_parent.password.startswith("$2b$"):
+        # Hashed password - use verify_password
+        is_valid = verify_password(data.password, db_parent.password)
+    else:
+        # Plain text password (legacy) - direct comparison
+        is_valid = (db_parent.password == data.password)
+        # Optionally upgrade to hashed password on successful login
+        if is_valid:
+            logger.info(f"Upgrading plain text password to hashed for parent: {data.username}")
+            db_parent.password = hash_password(data.password)
+            db.commit()
+    
+    if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token(
         data={"sub": db_parent.username},
         expires_delta=timedelta(hours=1),
     )
+    logger.info(f"Parent logged in: {data.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
