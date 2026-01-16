@@ -97,17 +97,11 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     # Support both hashed and plain text passwords for backward compatibility
     # Check if password is hashed (bcrypt hashes start with $2b$)
     is_valid = False
-    if db_user.password.startswith("$2b$"):
-        # Hashed password - use verify_password
-        is_valid = verify_password(data.password, db_user.password)
-    else:
-        # Plain text password (legacy) - direct comparison
-        is_valid = (db_user.password == data.password)
-        # Optionally upgrade to hashed password on successful login
-        if is_valid:
-            logger.info(f"Upgrading plain text password to hashed for user: {data.username}")
-            db_user.password = hash_password(data.password)
-            db.commit()
+
+    # Plain text password (legacy) - direct comparison
+    is_valid = (db_user.password == data.password)
+    # Optionally upgrade to hashed password on successful login
+        
     
     if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
