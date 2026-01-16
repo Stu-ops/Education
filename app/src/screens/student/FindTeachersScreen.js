@@ -1,5 +1,5 @@
 // FindTeachersScreen for React Native
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,14 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, GraduationCap, ChevronRight } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import colors from '../../styles/colors';
+import { apiLogger } from '../../utils/config';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
 
 export default function FindTeachersScreen() {
-  const navigation = useNavigation();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +27,19 @@ export default function FindTeachersScreen() {
   }, []);
 
   const fetchTeachers = async () => {
+    const classLevel = 'class_6'; // TODO: Get from user context
+    const endpoint = `/teachers/class/${classLevel}`;
     try {
-      const response = await fetch(`${BACKEND_URL}/teachers/list`);
+      const response = await fetch(`${BACKEND_URL}${endpoint}`);
       if (response.ok) {
         const data = await response.json();
-        setTeachers(data.teachers || []);
+        apiLogger(endpoint, 'GET', data);
+        setTeachers(Array.isArray(data) ? data : []);
+      } else {
+        apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch teachers' });
       }
     } catch (error) {
+      apiLogger(endpoint, 'GET', null, error);
       console.error('Error fetching teachers:', error);
     } finally {
       setLoading(false);
@@ -43,10 +49,13 @@ export default function FindTeachersScreen() {
   const renderTeacher = ({ item }) => (
     <TouchableOpacity
       style={styles.teacherCard}
-      onPress={() => navigation.navigate('TeacherVideos', {
-        teacherId: item.id,
-        teacherName: item.name,
-        classLevel: item.class_level || '5',
+      onPress={() => router.push({
+        pathname: '/student/teacher-videos',
+        params: {
+          teacherId: item.id,
+          teacherName: item.name,
+          classLevel: item.class_level || '5',
+        }
       })}
     >
       <LinearGradient
@@ -69,7 +78,7 @@ export default function FindTeachersScreen() {
     <LinearGradient colors={colors.gradients.main} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.back()}>
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Find Teachers</Text>

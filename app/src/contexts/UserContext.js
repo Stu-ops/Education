@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import storage from '../utils/storage';
 import { fetchUser, saveUser, loginUser, signupUser } from '../utils/userApi';
+import { apiLogger } from '../utils/config';
 
 export const UserContext = createContext();
 
@@ -79,7 +80,10 @@ export function UserProvider({ children }) {
   // UPDATE USER
   const updateUser = async (updates) => {
     const token = await storage.getItem('token');
-    if (!user || !token) return null;
+    if (!user || !token) {
+      apiLogger('/users/update', 'PUT', null, { message: 'No user or token' });
+      return null;
+    }
 
     try {
       const payload = {
@@ -90,16 +94,21 @@ export function UserProvider({ children }) {
 
       // Remove any frontend-only fields
       delete payload.classLevel;
+      delete payload.id; // Don't send id in update
+      delete payload.username; // Don't update username
 
       console.log('Updating user with payload:', payload);
+      apiLogger('/users/update', 'PUT (sending)', payload);
       
       const updated = await saveUser(payload, token);
       if (updated) {
+        apiLogger('/users/update', 'PUT (success)', updated);
         setUser(updated);
         return updated;
       }
       return null;
     } catch (error) {
+      apiLogger('/users/update', 'PUT', null, error);
       console.error('Error in updateUser:', error);
       return null;
     }

@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ImageIcon, Send, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { sendToGemini, sendCheckRequest, setSessionId } from '../utils/api';
+import { apiLogger } from '../utils/config';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useHistoryStore } from '../contexts/HistoryContext';
 import { useUser } from '../contexts/UserContext';
@@ -217,6 +218,7 @@ export default function ChatSection({
     if ((!userMessage && !image) || loading) return;
     if (!user?.username) {
       console.error('User not logged in');
+      apiLogger('/chat/send', 'POST', null, { message: 'User not logged in' });
       return;
     }
 
@@ -226,6 +228,8 @@ export default function ChatSection({
 
     try {
       setLoading(true);
+      apiLogger('/chat/send/instant', 'POST (sending)', { text: userMessage, username: user.username });
+      
       const response = await sendToGemini(
         { text: userMessage, image: image || null, time_taken: timeTaken },
         user.username
@@ -235,11 +239,14 @@ export default function ChatSection({
         response.candidates?.[0]?.content?.parts?.[0]?.text ||
         (lang === 'hi' ? 'कोई उत्तर नहीं मिला।' : 'No response received.');
 
+      apiLogger('/chat/send/instant', 'POST (response)', { reply: reply.substring(0, 100) + '...' });
+
       setMessages((prev) => [...prev, { text: reply, sender: 'bot' }]);
       addConversation([...messages, newUserMsg, { text: reply, sender: 'bot' }]);
       resetTimer();
     } catch (error) {
       console.error(error);
+      apiLogger('/chat/send/instant', 'POST', null, error);
       setMessages((prev) => [
         ...prev,
         { text: lang === 'hi' ? 'त्रुटि हुई।' : 'An error occurred.', sender: 'bot' },
@@ -260,19 +267,24 @@ export default function ChatSection({
 
     try {
       setLoading(true);
+      apiLogger('/chat/send/check', 'POST (sending)', { text: userMessage, username: user.username });
+      
       const response = await sendCheckRequest(
         { text: userMessage, image: image || null, time_taken: timeTaken },
         user.username
       );
 
       const reply = response.bot_message || 'No response received.';
-      const replyText = typeof reply === 'string' ? reply : (reply?.text || String(reply));
+      const replyText = typeof reply === 'string' ? reply : (reply?.text || JSON.stringify(reply));
+
+      apiLogger('/chat/send/check', 'POST (response)', { reply: replyText.substring(0, 100) + '...' });
 
       setMessages((prev) => [...prev, { text: replyText, sender: 'bot' }]);
       addConversation([...messages, newUserMsg, { text: replyText, sender: 'bot' }]);
       resetTimer();
     } catch (error) {
       console.error(error);
+      apiLogger('/chat/send/check', 'POST', null, error);
       setMessages((prev) => [
         ...prev,
         { text: 'An error occurred while checking.', sender: 'bot' },
@@ -369,7 +381,15 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   containerExpanded: {
-    flex: 2,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flex: 1,
+    marginTop: 0,
+    borderRadius: 0,
+    zIndex: 1000,
   },
   title: {
     fontSize: 16,
@@ -413,7 +433,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   messageBubbleContainer: {
-    maxWidth: '75%',
+    maxWidth: '80%',
+    flexShrink: 1,
   },
   messageBubble: {
     borderRadius: 16,
@@ -432,6 +453,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
+    flexWrap: 'wrap',
   },
   messageImage: {
     width: 200,

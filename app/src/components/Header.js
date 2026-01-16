@@ -2,20 +2,19 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { resetSession } from '../utils/api';
 import colors from '../styles/colors';
 
 export default function Header({ onReset }) {
   const { lang, toggleLang } = useLanguage();
-  const navigation = useNavigation();
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const handleReset = async () => {
     setIsLogoAnimating(true);
-    
+
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1.1,
@@ -44,7 +43,7 @@ export default function Header({ onReset }) {
         {/* Logo */}
         <TouchableOpacity onPress={handleReset} activeOpacity={0.8}>
           <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Text style={styles.logo}>📘 Math GPT</Text>
+            <Text style={styles.logo}>📘 Masterly</Text>
             <Text style={styles.tagline}>
               {lang === 'hi' ? 'गणित सीखने में मज़ा आता है!' : 'Learning math is fun!'}
             </Text>
@@ -56,7 +55,7 @@ export default function Header({ onReset }) {
           {/* Parent Portal Link */}
           <TouchableOpacity
             style={styles.parentButton}
-            onPress={() => navigation.navigate('Parent')}
+            onPress={() => router.push('/parent/login')}
           >
             <Text style={styles.parentEmoji}>👨‍👩‍👧</Text>
           </TouchableOpacity>

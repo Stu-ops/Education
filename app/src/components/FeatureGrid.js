@@ -2,14 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getTopics } from '../utils/exploreApi';
 import colors from '../styles/colors';
 
 export default function FeatureGrid({ onTopicClick }) {
   const { lang } = useLanguage();
-  const navigation = useNavigation();
   const [topics, setTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,7 +56,7 @@ export default function FeatureGrid({ onTopicClick }) {
   return (
     <View style={styles.container}>
       {/* Browse Teachers Card */}
-      <LinearGradient
+      {/* <LinearGradient
         colors={['rgba(34,197,94,0.2)', 'rgba(16,185,129,0.2)']}
         style={styles.teacherCard}
       >
@@ -72,7 +71,10 @@ export default function FeatureGrid({ onTopicClick }) {
           </View>
           <TouchableOpacity
             style={styles.teacherCardButton}
-            onPress={() => navigation.navigate('FindTeachers')}
+            onPress={() => {
+              // Navigate to find teachers (student feature)
+              router.push('/student/find-teachers');
+            }}
           >
             <LinearGradient
               colors={['#22C55E', '#10B981']}
@@ -84,7 +86,7 @@ export default function FeatureGrid({ onTopicClick }) {
             </LinearGradient>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </LinearGradient> */}
 
       {/* My Teachers Card */}
       <LinearGradient
@@ -102,7 +104,10 @@ export default function FeatureGrid({ onTopicClick }) {
           </View>
           <TouchableOpacity
             style={styles.teacherCardButton}
-            onPress={() => navigation.navigate('MyTeachers')}
+            onPress={() => {
+              // Navigate to my teachers (student feature)
+              router.push('/student/my-teachers');
+            }}
           >
             <LinearGradient
               colors={['#F97316', '#EF4444']}
@@ -116,24 +121,22 @@ export default function FeatureGrid({ onTopicClick }) {
         </View>
       </LinearGradient>
 
-      {/* Math Topics Grid */}
-      <View style={styles.grid}>
+      {/* Math Topics - Horizontal Row */}
+      <View style={styles.topicsRow}>
         {features.map((f, i) => (
           <TouchableOpacity
             key={i}
-            style={styles.gridItem}
+            style={styles.topicItem}
             onPress={() => onTopicClick(f.label)}
             activeOpacity={0.8}
           >
-            <View style={styles.gridItemContent}>
-              <LinearGradient
-                colors={f.gradient}
-                style={styles.iconContainer}
-              >
-                <Text style={styles.icon}>{f.icon}</Text>
-              </LinearGradient>
-              <Text style={styles.label}>{f.label}</Text>
-            </View>
+            <LinearGradient
+              colors={f.gradient}
+              style={styles.topicIcon}
+            >
+              <Text style={styles.topicIconText}>{f.icon}</Text>
+            </LinearGradient>
+            <Text style={styles.topicLabel} numberOfLines={1}>{f.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -187,38 +190,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  grid: {
+  topicsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: 8,
+    gap: 8,
   },
-  gridItem: {
-    width: '48%',
-    marginBottom: 12,
-  },
-  gridItemContent: {
+  topicItem: {
+    flex: 1,
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 8,
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  topicIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  icon: {
-    fontSize: 24,
+  topicIconText: {
+    fontSize: 16,
     color: '#FFFFFF',
   },
-  label: {
-    fontSize: 14,
+  topicLabel: {
+    fontSize: 10,
     color: '#FFFFFF',
     fontWeight: '500',
     textAlign: 'center',

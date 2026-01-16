@@ -55,7 +55,7 @@ export default function HomeScreen({ route }) {
       style={styles.container}
     >
       <StatusBar barStyle="light-content" />
-      
+
       {/* Motivational Quote Overlay */}
       {showQuote && isFirstLoad && (
         <MotivationalQuote onComplete={handleQuoteComplete} />

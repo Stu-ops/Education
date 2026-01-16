@@ -1,5 +1,5 @@
 // MyTeachersScreen for React Native
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, GraduationCap, ChevronRight } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useUser } from '../../contexts/UserContext';
 import colors from '../../styles/colors';
@@ -19,7 +19,6 @@ import colors from '../../styles/colors';
 const BACKEND_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
 
 export default function MyTeachersScreen() {
-  const navigation = useNavigation();
   const { user } = useUser();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,10 +46,13 @@ export default function MyTeachersScreen() {
   const renderTeacher = ({ item }) => (
     <TouchableOpacity
       style={styles.teacherCard}
-      onPress={() => navigation.navigate('TeacherVideos', {
-        teacherId: item.id,
-        teacherName: item.name,
-        classLevel: user?.class_level || '5',
+      onPress={() => router.push({
+        pathname: '/student/teacher-videos',
+        params: {
+          teacherId: item.id,
+          teacherName: item.name,
+          classLevel: user?.class_level || '5',
+        }
       })}
     >
       <LinearGradient
@@ -73,7 +75,7 @@ export default function MyTeachersScreen() {
     <LinearGradient colors={colors.gradients.main} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.back()}>
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Teachers</Text>
@@ -97,7 +99,7 @@ export default function MyTeachersScreen() {
             <Text style={styles.emptyText}>No enrolled teachers yet</Text>
             <TouchableOpacity
               style={styles.browseButton}
-              onPress={() => navigation.navigate('FindTeachers')}
+              onPress={() => router.push('/student/find-teachers')}
             >
               <LinearGradient
                 colors={['#22C55E', '#16A34A']}

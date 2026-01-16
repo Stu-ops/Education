@@ -2,6 +2,7 @@
 import axios from 'axios';
 import storage from './storage';
 import Constants from 'expo-constants';
+import { apiLogger } from './config';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
 
@@ -12,13 +13,25 @@ const backendApi = axios.create({
 
 // Generic requests
 export const getRequest = async (url, params = {}) => {
-  const response = await backendApi.get(url, { params });
-  return response.data;
+  try {
+    const response = await backendApi.get(url, { params });
+    apiLogger(url, 'GET', response.data);
+    return response.data;
+  } catch (error) {
+    apiLogger(url, 'GET', null, error);
+    throw error;
+  }
 };
 
 export const postRequest = async (url, data = {}, params = {}) => {
-  const response = await backendApi.post(url, data, { params });
-  return response.data;
+  try {
+    const response = await backendApi.post(url, data, { params });
+    apiLogger(url, 'POST', response.data);
+    return response.data;
+  } catch (error) {
+    apiLogger(url, 'POST', null, error);
+    throw error;
+  }
 };
 
 // Session Management

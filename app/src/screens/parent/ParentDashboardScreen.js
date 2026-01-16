@@ -58,33 +58,38 @@ export default function ParentDashboardScreen() {
               {/* Stats Cards */}
               <View style={styles.statsRow}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.problems_solved || 0}</Text>
+                  <Text style={styles.statValue}>{stats.child?.total_attempts || 0}</Text>
                   <Text style={styles.statLabel}>Problems Solved</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.accuracy || 0}%</Text>
+                  <Text style={styles.statValue}>{Math.round((stats.child?.accuracy || 0) * 100)}%</Text>
                   <Text style={styles.statLabel}>Accuracy</Text>
                 </View>
               </View>
 
               <View style={styles.statsRow}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.streak || 0}</Text>
+                  <Text style={styles.statValue}>{stats.child?.current_streak || 0}</Text>
                   <Text style={styles.statLabel}>Day Streak 🔥</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.time_spent || 0}m</Text>
-                  <Text style={styles.statLabel}>Time Spent</Text>
+                  <Text style={styles.statValue}>{stats.child?.score?.toFixed(1) || 0}</Text>
+                  <Text style={styles.statLabel}>Score</Text>
                 </View>
               </View>
 
-              {/* Recent Activity */}
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>📊 Recent Activity</Text>
-                <Text style={styles.activityText}>
-                  Your child has been practicing {stats.recent_topic || 'math'} recently.
-                </Text>
-              </View>
+              {/* Comparison Card */}
+              {stats.comparison && (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>📊 Class Comparison</Text>
+                  <Text style={styles.activityText}>
+                    Rank: {stats.comparison.rank} of {stats.comparison.class_count} students
+                  </Text>
+                  <Text style={styles.activityText}>
+                    Percentile: {stats.comparison.percentile?.toFixed(1)}%
+                  </Text>
+                </View>
+              )}
             </>
           ) : (
             <View style={styles.emptyContainer}>

@@ -78,6 +78,16 @@ export default function ProfileScreen() {
     );
   }
 
+  if (!user) {
+    return (
+      <LinearGradient colors={colors.gradients.main} style={styles.container}>
+        <SafeAreaView style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Please log in to view profile</Text>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -108,13 +118,27 @@ export default function ProfileScreen() {
     setSaving(true);
     try {
       // Prepare the update payload with proper field mapping
+      // Convert "Class 5" format to "class_5" for backend
+      let classLevelForBackend = form.classLevel;
+      if (classLevelForBackend) {
+        // Handle formats like "Class 5", "class 5", "5"
+        const match = classLevelForBackend.match(/\d+/);
+        if (match) {
+          classLevelForBackend = `class_${match[0]}`;
+        }
+      }
+      
       const updatePayload = {
-        ...form,
-        class_level: form.classLevel, // Map classLevel to class_level for backend
+        name: form.name,
+        email: form.email,
+        age: form.age,
+        school: form.school,
+        level: form.level,
+        class_level: classLevelForBackend,
+        avatar: form.avatar,
       };
       
-      // Remove the frontend field name
-      delete updatePayload.classLevel;
+      console.log('Saving profile with payload:', updatePayload);
       
       const updated = await updateUser(updatePayload);
       if (updated) {
@@ -137,7 +161,15 @@ export default function ProfileScreen() {
     await logout();
   };
 
-  const classOptions = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Above Class 5'];
+  const classOptions = ['class_1', 'class_2', 'class_3', 'class_4', 'class_5', 'class_6', 'class_7', 'class_8', 'class_9', 'class_10', 'class_11', 'class_12'];
+
+  const formatClassDisplay = (classLevel) => {
+    if (!classLevel) return 'Select class';
+    // Convert class_5 to "Class 5" for display
+    const match = classLevel.match(/class_?(\d+)/i);
+    if (match) return `Class ${match[1]}`;
+    return classLevel;
+  };
 
   return (
     <LinearGradient colors={colors.gradients.main} style={styles.container}>
@@ -206,7 +238,7 @@ export default function ProfileScreen() {
                 >
                   <Text style={styles.inputLabel}>Class:</Text>
                   <View style={styles.inputValue}>
-                    <Text style={styles.inputValueText}>{form?.classLevel || 'Select class'}</Text>
+                    <Text style={styles.inputValueText}>{formatClassDisplay(form?.classLevel)}</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -329,10 +361,18 @@ export default function ProfileScreen() {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             {!editing ? (
-              <TouchableOpacity style={styles.actionButton} onPress={() => setEditing(true)}>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                onPress={() => {
+                  console.log('Edit Profile pressed');
+                  setEditing(true);
+                }}
+                activeOpacity={0.7}
+              >
                 <LinearGradient
                   colors={['#3B82F6', '#2563EB']}
                   style={styles.actionButtonGradient}
+                  pointerEvents="none"
                 >
                   <Edit size={20} color="#FFFFFF" />
                   <Text style={styles.actionButtonText}>Edit Profile</Text>
@@ -341,12 +381,17 @@ export default function ProfileScreen() {
             ) : (
               <TouchableOpacity
                 style={[styles.actionButton, saving && styles.buttonDisabled]}
-                onPress={handleSave}
+                onPress={() => {
+                  console.log('Save Changes pressed');
+                  handleSave();
+                }}
                 disabled={saving}
+                activeOpacity={0.7}
               >
                 <LinearGradient
                   colors={['#22C55E', '#16A34A']}
                   style={styles.actionButtonGradient}
+                  pointerEvents="none"
                 >
                   {saving ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -360,10 +405,15 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
+            <TouchableOpacity 
+              style={styles.actionButton} 
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
               <LinearGradient
                 colors={['#EF4444', '#DC2626']}
                 style={styles.actionButtonGradient}
+                pointerEvents="none"
               >
                 <LogOut size={20} color="#FFFFFF" />
                 <Text style={styles.actionButtonText}>Logout</Text>
@@ -404,7 +454,7 @@ export default function ProfileScreen() {
                         form?.classLevel === c && styles.pickerItemTextSelected,
                       ]}
                     >
-                      {c}
+                      {formatClassDisplay(c)}
                     </Text>
                   </TouchableOpacity>
                 ))}

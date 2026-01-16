@@ -14,6 +14,7 @@ import { ArrowLeft, Play, FileText } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import colors from '../../styles/colors';
+import { apiLogger } from '../../utils/config';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
 
@@ -29,15 +30,18 @@ export default function TeacherVideosScreen() {
   }, []);
 
   const fetchVideos = async () => {
+    const endpoint = `/teachers/by-teacher/${teacherId}/class/${classLevel}`;
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/teachers/${teacherId}/videos?class_level=${classLevel}`
-      );
+      const response = await fetch(`${BACKEND_URL}${endpoint}`);
       if (response.ok) {
         const data = await response.json();
+        apiLogger(endpoint, 'GET', data);
         setVideos(data.videos || []);
+      } else {
+        apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch videos' });
       }
     } catch (error) {
+      apiLogger(endpoint, 'GET', null, error);
       console.error('Error fetching videos:', error);
     } finally {
       setLoading(false);
@@ -49,7 +53,7 @@ export default function TeacherVideosScreen() {
       style={styles.videoCard}
       onPress={() => navigation.navigate('VideoPlayer', {
         videoId: item.id,
-        videoUrl: item.url,
+        videoUrl: item.file_path,
         videoTitle: item.title,
       })}
     >

@@ -1,6 +1,7 @@
 // HistoryContext adapted from web app for React Native
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import storage from '../utils/storage';
+import { apiLogger } from '../utils/config';
 
 export const HistoryContext = createContext();
 
@@ -18,10 +19,12 @@ export function HistoryProvider({ children }) {
   const loadHistory = async () => {
     try {
       const savedHistory = await storage.getItem('chatHistory');
+      apiLogger('localStorage/chatHistory', 'GET', savedHistory ? JSON.parse(savedHistory) : []);
       if (savedHistory) {
         setHistory(JSON.parse(savedHistory));
       }
     } catch (error) {
+      apiLogger('localStorage/chatHistory', 'GET', null, error);
       console.error('Error loading history:', error);
     }
   };
@@ -29,7 +32,9 @@ export function HistoryProvider({ children }) {
   const saveHistory = async (newHistory) => {
     try {
       await storage.setItem('chatHistory', JSON.stringify(newHistory));
+      apiLogger('localStorage/chatHistory', 'SAVE', { count: newHistory.length });
     } catch (error) {
+      apiLogger('localStorage/chatHistory', 'SAVE', null, error);
       console.error('Error saving history:', error);
     }
   };
@@ -38,6 +43,8 @@ export function HistoryProvider({ children }) {
     const id = sessionId || Date.now().toString();
     const title = messages[0]?.text?.slice(0, 30) || 'New Chat';
     const timestamp = Date.now();
+    
+    apiLogger('history/addConversation', 'ADD', { id, title, messageCount: messages.length });
     
     setHistory((prev) => {
       // Check if conversation with this session already exists
@@ -66,11 +73,13 @@ export function HistoryProvider({ children }) {
   };
 
   const clearHistory = async () => {
+    apiLogger('history/clearHistory', 'DELETE', { message: 'All history cleared' });
     setHistory([]);
     await storage.removeItem('chatHistory');
   };
 
   const deleteConversation = async (id) => {
+    apiLogger('history/deleteConversation', 'DELETE', { id });
     setHistory((prev) => {
       const newHistory = prev.filter(h => h.id !== id);
       saveHistory(newHistory);
