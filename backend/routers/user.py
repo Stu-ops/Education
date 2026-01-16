@@ -21,15 +21,15 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     print(user.password)
     new_user = User(
         username=user.username,
-        password==user.password,  # Hash password for security
+        password=user.password,  # Hash password for security
         name=user.name or user.username,
         level=user.level or 1,
         email=user.email,
         avatar=user.avatar,
         class_level=user.class_level,
         age=user.age,
-        school=user.school,
-    )
+        school=user.school
+        )
     print(new_user.password)
     db.add(new_user)
     db.commit()
