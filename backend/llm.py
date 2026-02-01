@@ -169,9 +169,10 @@ def generate_hint(question: str,  last_context: str = "", image_b64 :str | None 
         {"role": "user", "content": content}
     ]
     response = completion(
-        model=MODEL_NAME,
+        model="openai/sam",
+    api_key="EMPTY",
+    api_base="https://8d7f4ef2525d.ngrok-free.app/v1",
         messages=messages,
-        api_key=API_KEY,
     )
 
     return response["choices"][0]["message"]["content"].strip()
@@ -228,15 +229,13 @@ Output format (must match exactly):
 """
 
     try:
-        response = completion(
-            model=MODEL_NAME,
+        response = completion(model="openai/sam",
+    api_key="EMPTY",
+    api_base="https://8d7f4ef2525d.ngrok-free.app/v1",
             messages=[
                 {"role": "system", "content": system_prompt},
                 *conversation
-            ],
-            api_key=API_KEY,
-            temperature=0.0,
-            max_tokens=300,
+            ]
         )
 
         text = response["choices"][0]["message"]["content"].strip()
@@ -355,3 +354,19 @@ def generate_parent_report(child: dict, comparison: dict | None = None) -> str:
 
     resp = completion(model=MODEL_NAME, messages=messages, api_key=API_KEY)
     return resp["choices"][0]["message"]["content"].strip()
+    
+    
+
+
+
+
+# response = completion(
+#     model="Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf",
+#     messages=[
+#         {"role": "user", "content": "Hello, who are you?"}
+#     ],
+#     api_base="https://8d7f4ef2525d.ngrok-free.app",
+#     api_key="none"  # required by litellm but not used for local servers
+# )
+
+# print(response["choices"][0]["message"]["content"])
