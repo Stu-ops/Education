@@ -42,23 +42,41 @@ export const TeacherProvider = ({ children }) => {
   const fetchTeacherProfile = async (token) => {
     const endpoint = '/teachers/me';
     try {
+      console.log('[TeacherContext] Fetching teacher profile...');
       const response = await fetch(`${BACKEND_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log('[TeacherContext] Profile response status:', response.status);
+
       if (response.ok) {
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          console.error('[TeacherContext] Non-JSON response:', text);
+          apiLogger(endpoint, 'GET', null, { message: 'Invalid response format' });
+          await storage.removeItem('teacherToken');
+          await storage.removeItem('teacherId');
+          await storage.removeItem('teacherUsername');
+          return;
+        }
+
+        console.log('[TeacherContext] Teacher profile:', JSON.stringify(data, null, 2));
         apiLogger(endpoint, 'GET', data);
         setTeacher(data);
       } else {
-        apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch profile' });
+        apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch profile', status: response.status });
         await storage.removeItem('teacherToken');
         await storage.removeItem('teacherId');
         await storage.removeItem('teacherUsername');
       }
     } catch (error) {
+      console.error('[TeacherContext] Error fetching teacher profile:', error);
       apiLogger(endpoint, 'GET', null, error);
-      console.error('Error fetching teacher profile:', error);
       await storage.removeItem('teacherToken');
       await storage.removeItem('teacherId');
       await storage.removeItem('teacherUsername');
@@ -69,23 +87,41 @@ export const TeacherProvider = ({ children }) => {
     const endpoint = '/teachers/students-raw';
     try {
       const teacherUsername = await storage.getItem('teacherUsername');
-      if (!teacherUsername) return [];
+      if (!teacherUsername) {
+        console.log('[TeacherContext] No teacher username found');
+        return [];
+      }
       
+      console.log('[TeacherContext] Fetching students for:', teacherUsername);
       const url = `${BACKEND_URL}${endpoint}?teacher_username=${encodeURIComponent(teacherUsername)}${forceRefresh ? '&_t=' + Date.now() : ''}`;
       const response = await fetch(url);
 
+      console.log('[TeacherContext] Students response status:', response.status);
+
       if (response.ok) {
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          console.error('[TeacherContext] Non-JSON response:', text);
+          apiLogger(endpoint, 'GET', null, { message: 'Invalid response format' });
+          return [];
+        }
+
+        console.log('[TeacherContext] Students data:', JSON.stringify(data, null, 2));
         apiLogger(endpoint, 'GET', data);
         const studentsList = data.students || [];
         setStudents(studentsList);
         return studentsList;
       }
-      apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch students' });
+      apiLogger(endpoint, 'GET', null, { message: 'Failed to fetch students', status: response.status });
       return [];
     } catch (error) {
+      console.error('[TeacherContext] Error fetching students:', error);
       apiLogger(endpoint, 'GET', null, error);
-      console.error('Error fetching students:', error);
       return [];
     }
   };

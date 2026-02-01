@@ -79,6 +79,7 @@ export async function loginParent({ username, password }) {
 export async function fetchParentStats(token) {
   const endpoint = '/parents/stats';
   try {
+    console.log('[parentApi] Fetching stats with token:', token ? 'present' : 'missing');
     const res = await fetch(`${API_URL}${endpoint}`, {
       method: 'GET',
       headers: { 
@@ -87,16 +88,32 @@ export async function fetchParentStats(token) {
       },
     });
 
+    console.log('[parentApi] Response status:', res.status);
+
     if (!res.ok) {
       const error = await parseError(res);
+      console.error('[parentApi] Error response:', error);
       apiLogger(endpoint, 'GET', null, error);
       throw error;
     }
 
-    const data = await res.json();
+    const contentType = res.headers.get('content-type');
+    console.log('[parentApi] Content-Type:', contentType);
+
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      console.error('[parentApi] Non-JSON response:', text);
+      throw new Error('Invalid response format from server');
+    }
+
+    console.log('[parentApi] Stats data received:', JSON.stringify(data, null, 2));
     apiLogger(endpoint, 'GET', data);
     return data;
   } catch (error) {
+    console.error('[parentApi] Fetch error:', error);
     apiLogger(endpoint, 'GET', null, error);
     throw error;
   }
