@@ -68,7 +68,7 @@ app = FastAPI()
 
 # Get allowed origins from environment variable (comma-separated)
 # Default to localhost for development, but warn if using wildcard in production
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS","*,http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173")
 if allowed_origins_str == "*":
     logger.warning("CORS configured with wildcard (*) - this should only be used in development!")
     allowed_origins = ["*"]
