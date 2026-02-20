@@ -1,11 +1,26 @@
-// App Configuration
-// Set DEBUG_API to true to show alerts for every API call with response data
+﻿// App Configuration
+// Control API alerts with env var:
+// EXPO_PUBLIC_API_LOGGER=false (preferred) or extra.API_LOGGER in app.config.js
 
 import { Alert } from 'react-native';
+import Constants from 'expo-constants';
+
+const parseBool = (value, fallback = false) => {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === 'boolean') return value;
+  const v = String(value).trim().toLowerCase();
+  return !(v === 'false' || v === '0' || v === 'off' || v === 'no');
+};
+
+const envFlag =
+  process.env.EXPO_PUBLIC_API_LOGGER ??
+  Constants.expoConfig?.extra?.API_LOGGER ??
+  Constants.manifest?.extra?.API_LOGGER ??
+  Constants.expoConfig?.extra?.apiLogger;
 
 export const config = {
-  // Set to true to enable API call alerts with response data
-  DEBUG_API: true,
+  // Set to false to disable API call alerts
+  DEBUG_API: parseBool(envFlag, false),
 };
 
 // Helper function to log API calls
@@ -14,7 +29,7 @@ export const apiLogger = (endpoint, method, response, error = null) => {
 
   if (error) {
     Alert.alert(
-      `❌ API Error: ${method}`,
+      `API Error: ${method}`,
       `Endpoint: ${endpoint}\n\nError: ${error.message || JSON.stringify(error)}`,
       [{ text: 'OK' }]
     );
@@ -25,7 +40,7 @@ export const apiLogger = (endpoint, method, response, error = null) => {
         : String(response);
 
     Alert.alert(
-      `✅ API Success: ${method}`,
+      `API Success: ${method}`,
       `Endpoint: ${endpoint}\n\nResponse:\n${responseStr}${responseStr.length >= 500 ? '...(truncated)' : ''}`,
       [{ text: 'OK' }]
     );

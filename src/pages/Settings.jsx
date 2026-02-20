@@ -1,121 +1,152 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { Globe, Cpu, KeyRound, Save } from "lucide-react";
 
 const Settings = () => {
-    const [formData, setFormData] = useState({
-        url: '',
-        modelName: '',
-        apiKey: ''
-    });
-    const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
+  const [formData, setFormData] = useState({
+    api_base: "",
+    model_name: "",
+    api_key: "",
+  });
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setMessage('');
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-        try {
-            const response = await fetch('/config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
 
-            if (response.ok) {
-                setMessage('Configuration saved successfully!');
-                setFormData({ url: '', modelName: '', apiKey: '' });
-            } else {
-                setMessage('Failed to save configuration. Please try again.');
-            }
-        } catch (error) {
-            setMessage('Error: ' + error.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    try {
+      const response = await fetch("http://localhost:8000/config/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    return (
-        <div className="max-w-md mx-auto mt-8 p-6 bg-masterly-creamLight border border-masterly-border rounded-2xl shadow-sm">
-            <h1 className="text-2xl font-bold mb-6 text-center text-masterly-navy">Settings</h1>
+      if (response.ok) {
+        setMessage("Configuration saved successfully!");
+        setFormData({
+          api_base: "",
+          model_name: "",
+          api_key: "",
+        });
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.detail || "Failed to save configuration.");
+      }
+    } catch (error) {
+      setMessage("Error: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label htmlFor="url" className="block text-sm font-medium text-masterly-navy mb-1">
-                        URL
-                    </label>
-                    <input
-                        type="url"
-                        id="url"
-                        name="url"
-                        value={formData.url}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-3 py-2 border border-masterly-border rounded-lg focus:outline-none focus:ring-2 focus:ring-masterly-orange focus:border-transparent bg-white"
-                        placeholder="https://api.example.com"
-                    />
-                </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-orange-100 px-4">
+      <div className="w-full max-w-lg bg-white/80 backdrop-blur-md border border-orange-100 rounded-3xl shadow-xl p-8">
 
-                <div>
-                    <label htmlFor="modelName" className="block text-sm font-medium text-masterly-navy mb-1">
-                        Model Name
-                    </label>
-                    <input
-                        type="text"
-                        id="modelName"
-                        name="modelName"
-                        value={formData.modelName}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-3 py-2 border border-masterly-border rounded-lg focus:outline-none focus:ring-2 focus:ring-masterly-orange focus:border-transparent bg-white"
-                        placeholder="gpt-4"
-                    />
-                </div>
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+          ⚙️ Settings
+        </h1>
+        <p className="text-center text-gray-500 mb-8 text-sm">
+          Configure your AI model connection
+        </p>
 
-                <div>
-                    <label htmlFor="apiKey" className="block text-sm font-medium text-masterly-navy mb-1">
-                        API Key
-                    </label>
-                    <input
-                        type="password"
-                        id="apiKey"
-                        name="apiKey"
-                        value={formData.apiKey}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-3 py-2 border border-masterly-border rounded-lg focus:outline-none focus:ring-2 focus:ring-masterly-orange focus:border-transparent bg-white"
-                        placeholder="sk-..."
-                    />
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-masterly-orange text-white py-2 px-4 rounded-full hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-masterly-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isLoading ? 'Saving...' : 'Save Configuration'}
-                </button>
-            </form>
+          {/* API Base URL */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              API Base URL
+            </label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type="url"
+                name="api_base"
+                value={formData.api_base}
+                onChange={handleChange}
+                required
+                placeholder="https://api.openai.com/v1"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+              />
+            </div>
+          </div>
 
-            {message && (
-                <div className={`mt-4 p-3 rounded-md ${message.includes('successfully')
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                    {message}
-                </div>
-            )}
-        </div>
-    );
+          {/* Model Name */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Model Name
+            </label>
+            <div className="relative">
+              <Cpu className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="model_name"
+                value={formData.model_name}
+                onChange={handleChange}
+                required
+                placeholder="gpt-4o-mini or gemini/gemini-2.5-flash-lite"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+              />
+            </div>
+          </div>
+
+          {/* API Key */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              API Key
+            </label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type="password"
+                name="api_key"
+                value={formData.api_key}
+                onChange={handleChange}
+                required
+                placeholder="sk-..."
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+              />
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isLoading ? "Saving..." : "Save Configuration"}
+          </button>
+        </form>
+
+        {/* Message */}
+        {message && (
+          <div
+            className={`mt-6 p-4 rounded-xl text-sm font-medium ${
+              message.includes("successfully")
+                ? "bg-green-100 text-green-700 border border-green-200"
+                : "bg-red-100 text-red-700 border border-red-200"
+            }`}
+          >
+            {message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Settings;
