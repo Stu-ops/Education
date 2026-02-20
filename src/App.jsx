@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import { measureWebVitals } from "./utils/performance";
 import { ParentProvider, useParent } from "./contexts/ParentContext";
 import { TeacherProvider, useTeacher } from "./contexts/TeacherContext";
@@ -33,8 +34,8 @@ const MyTeachers = lazy(() => import("./pages/student/MyTeachers"));
 // Loading component for lazy-loaded routes
 function LoadingSpinner() {
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-b from-purple-600 to-indigo-700">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+    <div className="flex items-center justify-center h-screen w-screen bg-masterly-cream">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-masterly-orange"></div>
     </div>
   );
 }
@@ -111,6 +112,10 @@ export default function App() {
                 {(props) => <Profile {...props} />}
               </MainLayout>
             }
+          />
+          <Route
+            path="/settings"
+            element={<Settings />}
           />
 
           {/* Parent Routes (New) - Wrapped with ParentProvider and Suspense */}

@@ -57,7 +57,7 @@ export default function ChatSection({
       celebrating: "🎉"
     };
     return (
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-xl border-2 border-white shadow-lg animate-bounce-in flex-shrink-0">
+      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl border border-masterly-border shadow-sm flex-shrink-0">
         {expressions[expression] || expressions.neutral}
       </div>
     );
@@ -66,7 +66,7 @@ export default function ChatSection({
   // Student avatar component
   const StudentAvatar = () => {
     return (
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-xl border-2 border-white shadow-lg flex-shrink-0">
+      <div className="w-10 h-10 rounded-full bg-masterly-creamDark flex items-center justify-center text-xl border border-masterly-border shadow-sm flex-shrink-0">
         👤
       </div>
     );
@@ -77,10 +77,10 @@ export default function ChatSection({
     return (
       <div className="flex gap-2 items-end animate-slide-in-left">
         <TeacherAvatar expression="thinking" />
-        <div className="bg-white/20 backdrop-blur rounded-2xl rounded-bl-sm shadow-md px-4 py-3 flex gap-1">
-          <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce-dots"></div>
-          <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce-dots" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce-dots" style={{ animationDelay: '0.4s' }}></div>
+        <div className="bg-white rounded-2xl rounded-bl-sm shadow-sm px-4 py-3 flex gap-1 border border-masterly-border">
+          <div className="w-2 h-2 bg-masterly-muted rounded-full animate-bounce-dots"></div>
+          <div className="w-2 h-2 bg-masterly-muted rounded-full animate-bounce-dots" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-2 h-2 bg-masterly-muted rounded-full animate-bounce-dots" style={{ animationDelay: '0.4s' }}></div>
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ export default function ChatSection({
         text:
           lang === "hi"
             ? "नमस्ते! मैं आपके गणित के सवालों की मदद कर सकता हूँ।"
-            : "Hello! I can help with your math questions.",
+            : "hey! how can i help you",
         sender: "bot",
       },
     ]
@@ -283,12 +283,11 @@ export default function ChatSection({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mt-2 shadow-xl text-white flex flex-col flex-1 min-h-[200px] max-h-[70vh] transition-all duration-300 ease-smooth">
-      <h2 className="text-base font-semibold mb-3">
+    <div className="bg-masterly-panel rounded-2xl p-4 mt-3 border border-masterly-border shadow-sm text-masterly-navy flex flex-col flex-1 min-h-[200px] max-h-[65vh] transition-all duration-300 ease-smooth">
+      <h2 className="text-sm font-semibold mb-3">
         {lang === "hi" ? "गणित शिक्षक" : "Math Teacher"}
       </h2>
 
-      <p className="text-xs text-white/70 mb-2">⏱️ {timeTaken}s since last message</p>
 
       <div 
         className="flex-1 overflow-y-auto space-y-3 text-sm pr-1 scroll-smooth" 
@@ -328,8 +327,8 @@ export default function ChatSection({
                   <div
                     className={`px-4 py-2 break-words ${
                       msg.sender === "user" 
-                        ? "bg-gradient-to-r from-green-400 to-green-600 rounded-2xl rounded-br-sm shadow-lg" 
-                        : "bg-white/20 backdrop-blur rounded-2xl rounded-bl-sm shadow-md"
+                        ? "bg-masterly-creamDark rounded-2xl rounded-br-sm shadow-sm border border-masterly-border" 
+                        : "bg-white rounded-2xl rounded-bl-sm shadow-sm border border-masterly-border"
                     }`}
                   >
                     {msg.text}
@@ -355,9 +354,9 @@ export default function ChatSection({
       {/* Success animation */}
       {showSuccessAnimation && <SuccessAnimation onComplete={() => setShowSuccessAnimation(false)} />}
 
-      <div className="flex items-center mt-3 bg-white/20 rounded-xl px-3 py-2 shrink-0 space-x-2 min-h-[48px] transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-glow-blue">
-        <label className="p-2 hover:bg-white/30 rounded-lg cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <Image className="text-white" size={20} aria-hidden="true" />
+      <div className="flex items-center mt-3 bg-masterly-input rounded-2xl px-3 py-2 shrink-0 space-x-2 min-h-[48px] border border-masterly-border">
+        <label className="p-2 hover:bg-masterly-creamDark rounded-xl cursor-pointer transition-all duration-200 active:scale-95 min-w-[40px] min-h-[40px] flex items-center justify-center">
+          <Image className="text-masterly-muted" size={18} aria-hidden="true" />
           <input
             type="file"
             accept="image/*"
@@ -372,16 +371,17 @@ export default function ChatSection({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            lang === "hi" ? "अपना सवाल पूछें..." : "Ask your question..."
+            lang === "hi" ? "अपना सवाल लिखें..." : "Enter your text..."
           }
-          className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white/70"
+          className="flex-1 bg-transparent outline-none text-sm text-masterly-navy placeholder-masterly-muted"
           onFocus={() => setIsChatExpanded(true)}
-          aria-label={lang === "hi" ? "गणित का सवाल पूछें" : "Ask a math question"}
+          aria-label={lang === "hi" ? "अपना सवाल लिखें" : "Enter your text"}
         />
         <button
   onClick={() => handleSend()}
   disabled={loading}
-  className="ml-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-glow-green flex items-center justify-center min-w-[44px] min-h-[44px]"
+  className="ml-1 bg-masterly-amber disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shadow-sm flex items-center justify-center min-w-[40px] min-h-[40px]"
+  style={{ backgroundColor: "#FBB33E" }}
 >
   {loading ? (
     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -394,7 +394,8 @@ export default function ChatSection({
 <button
   onClick={() => handleCheck()}
   disabled={loading}
-  className="ml-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-glow-blue flex items-center justify-center min-w-[44px] min-h-[44px]"
+  className="ml-1 bg-masterly-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shadow-sm flex items-center justify-center min-w-[40px] min-h-[40px]"
+  style={{ backgroundColor: "#07A0FD" }}
 >
   ✔
 </button>

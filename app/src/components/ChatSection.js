@@ -1,4 +1,4 @@
-// ChatSection component adapted from web app for React Native
+﻿// ChatSection component adapted from web app for React Native
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -11,11 +11,11 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ImageIcon, Send, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { sendToGemini, sendCheckRequest, setSessionId } from '../utils/api';
+import { sendToGemini, sendCheckRequest, setSessionId, getSessionId } from '../utils/api';
 import { apiLogger } from '../utils/config';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useHistoryStore } from '../contexts/HistoryContext';
@@ -24,36 +24,27 @@ import colors from '../styles/colors';
 
 // Teacher Avatar Component
 function TeacherAvatar({ expression }) {
-  const expressions = {
-    neutral: '🧑‍🏫',
-    thinking: '🤔',
-    happy: '😊',
-    celebrating: '🎉',
-  };
   return (
-    <LinearGradient
-      colors={['#A855F7', '#EC4899']}
-      style={styles.avatar}
-    >
-      <Text style={styles.avatarEmoji}>
-        {expressions[expression] || expressions.neutral}
-      </Text>
-    </LinearGradient>
+    <View style={styles.avatarTeacher}>
+      <Image
+        source={require('../../assets/illustrations/avatars/teacher.png')}
+        style={styles.avatarImage}
+      />
+    </View>
   );
 }
 
 // Student Avatar Component
 function StudentAvatar() {
   return (
-    <LinearGradient
-      colors={['#22C55E', '#3B82F6']}
-      style={styles.avatar}
-    >
-      <Text style={styles.avatarEmoji}>👤</Text>
-    </LinearGradient>
+    <View style={styles.avatarStudent}>
+      <Image
+        source={require('../../assets/illustrations/avatars/child.png')}
+        style={styles.avatarImage}
+      />
+    </View>
   );
 }
-
 // Typing Indicator Component
 function TypingIndicator() {
   const dot1 = useRef(new Animated.Value(0)).current;
@@ -150,7 +141,7 @@ export default function ChatSection({
     loadMessages || [
       {
         text: lang === 'hi'
-          ? 'नमस्ते! मैं आपके गणित के सवालों की मदद कर सकता हूँ।'
+          ? 'नमस्ते! मैं आपके गणित के सवालों में मदद कर सकता हूँ।'
           : 'Hello! I can help with your math questions.',
         sender: 'bot',
       },
@@ -167,6 +158,12 @@ export default function ChatSection({
   }, []);
 
   useEffect(() => {
+    if (loadMessages && loadMessages.length) {
+      setMessages(loadMessages);
+    }
+  }, [loadMessages]);
+
+  useEffect(() => {
     if (preloadSessionId) {
       setSessionId(preloadSessionId);
     }
@@ -176,7 +173,7 @@ export default function ChatSection({
     if (initialTopic) {
       handleSend(
         lang === 'hi'
-          ? `${initialTopic} पर बात शुरू करें।`
+          ? `आइए ${initialTopic} पर बात शुरू करें।`
           : `Let's start learning about ${initialTopic}.`
       );
     }
@@ -241,8 +238,14 @@ export default function ChatSection({
 
       apiLogger('/chat/send/instant', 'POST (response)', { reply: reply.substring(0, 100) + '...' });
 
-      setMessages((prev) => [...prev, { text: reply, sender: 'bot' }]);
-      addConversation([...messages, newUserMsg, { text: reply, sender: 'bot' }]);
+      const replyImage =
+        response?.image ||
+        response?.bot_message?.image ||
+        response?.bot_message?.image_url ||
+        null;
+      const botMsg = { text: reply, image: replyImage, sender: 'bot' };
+      setMessages((prev) => [...prev, botMsg]);
+      addConversation([...messages, newUserMsg, botMsg], getSessionId?.() || null);
       resetTimer();
     } catch (error) {
       console.error(error);
@@ -279,8 +282,15 @@ export default function ChatSection({
 
       apiLogger('/chat/send/check', 'POST (response)', { reply: replyText.substring(0, 100) + '...' });
 
-      setMessages((prev) => [...prev, { text: replyText, sender: 'bot' }]);
-      addConversation([...messages, newUserMsg, { text: replyText, sender: 'bot' }]);
+      const replyImage =
+        response?.bot_message?.image ||
+        response?.bot_message?.image_url ||
+        response?.image ||
+        response?.image_url ||
+        null;
+      const botMsg = { text: replyText, image: replyImage, sender: 'bot' };
+      setMessages((prev) => [...prev, botMsg]);
+      addConversation([...messages, newUserMsg, botMsg], getSessionId?.() || null);
       resetTimer();
     } catch (error) {
       console.error(error);
@@ -295,12 +305,21 @@ export default function ChatSection({
     }
   };
 
-  return (
-    <View style={[styles.container, isChatExpanded && styles.containerExpanded]}>
-      <Text style={styles.title}>
+  const content = (
+    <View style={styles.inner}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>
         {lang === 'hi' ? 'गणित शिक्षक' : 'Math Teacher'}
+        </Text>
+        {isChatExpanded && (
+          <TouchableOpacity style={styles.homeChip} onPress={() => setIsChatExpanded(false)}>
+            <Text style={styles.homeChipText}>Home</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      <Text style={styles.timer}>
+        {lang === 'hi' ? `समय: ${timeTaken}s` : `Time: ${timeTaken}s`}
       </Text>
-      <Text style={styles.timer}>⏱️ {timeTaken}s since last message</Text>
 
       <ScrollView
         ref={scrollViewRef}
@@ -338,68 +357,96 @@ export default function ChatSection({
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.imageButton} onPress={handleImageUpload}>
-          <ImageIcon size={20} color="#FFFFFF" />
+          <ImageIcon size={18} color={colors.text.muted} />
         </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder={lang === 'hi' ? 'अपना सवाल पूछें...' : 'Ask your question...'}
-          placeholderTextColor="rgba(255,255,255,0.5)"
+          placeholderTextColor={colors.text.muted}
           value={input}
           onChangeText={setInput}
           onFocus={() => setIsChatExpanded(true)}
         />
         <TouchableOpacity
-          style={[styles.sendButton, loading && styles.buttonDisabled]}
+          style={[styles.actionButton, styles.sendButton, loading && styles.buttonDisabled]}
           onPress={() => handleSend()}
           disabled={loading}
         >
-          <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.sendButtonGradient}>
-            <Send size={18} color="#FFFFFF" />
-          </LinearGradient>
+          <Send size={18} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.checkButton, loading && styles.buttonDisabled]}
+          style={[styles.actionButton, styles.checkButton, loading && styles.buttonDisabled]}
           onPress={handleCheck}
           disabled={loading}
         >
-          <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.sendButtonGradient}>
-            <Check size={18} color="#FFFFFF" />
-          </LinearGradient>
+          <Check size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>
+  );
+
+  return isChatExpanded ? (
+    <Modal visible transparent={false} animationType="slide" onRequestClose={() => setIsChatExpanded(false)}>
+      <View style={styles.fullscreen}>{content}</View>
+    </Modal>
+  ) : (
+    <View style={styles.container}>{content}</View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 8,
+    backgroundColor: colors.primary.creamLight,
+    borderRadius: 20,
+    padding: 14,
+    marginTop: 10,
     flex: 1,
-    minHeight: 200,
+    minHeight: 220,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    elevation: 2,
   },
-  containerExpanded: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  fullscreen: {
     flex: 1,
-    marginTop: 0,
-    borderRadius: 0,
-    zIndex: 1000,
+    backgroundColor: colors.primary.cream,
+    paddingTop: 16,
+    paddingHorizontal: 12,
+  },
+  inner: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  homeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: colors.primary.creamDark,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+  },
+  homeChipText: {
+    color: colors.text.primary,
+    fontWeight: '700',
+    fontSize: 12,
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   timer: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.text.muted,
     marginBottom: 8,
   },
   messageList: {
@@ -420,17 +467,30 @@ const styles = StyleSheet.create({
   messageRowBot: {
     flexDirection: 'row',
   },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  avatarTeacher: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+    backgroundColor: colors.text.white,
   },
-  avatarEmoji: {
-    fontSize: 18,
+  avatarStudent: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+    backgroundColor: colors.primary.creamDark,
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    resizeMode: 'contain',
   },
   messageBubbleContainer: {
     maxWidth: '80%',
@@ -442,15 +502,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   messageBubbleUser: {
-    backgroundColor: '#22C55E',
+    backgroundColor: colors.primary.creamDark,
     borderBottomRightRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   messageBubbleBot: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.text.white,
     borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   messageText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: 14,
     lineHeight: 20,
     flexWrap: 'wrap',
@@ -467,49 +531,57 @@ const styles = StyleSheet.create({
   },
   typingBubble: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.text.white,
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
     gap: 4,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   typingDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: colors.text.muted,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
+    backgroundColor: colors.text.white,
+    borderRadius: 16,
     paddingHorizontal: 8,
     paddingVertical: 6,
     marginTop: 8,
     gap: 8,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   imageButton: {
     padding: 8,
+    borderRadius: 10,
+    backgroundColor: colors.primary.creamDark,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   input: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: 14,
     paddingVertical: 8,
   },
+  actionButton: {
+    borderRadius: 10,
+    padding: 10,
+  },
   sendButton: {
-    borderRadius: 8,
-    overflow: 'hidden',
+    backgroundColor: colors.accent.orange,
   },
   checkButton: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  sendButtonGradient: {
-    padding: 10,
+    backgroundColor: colors.accent.blue,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
 });
+

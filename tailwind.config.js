@@ -303,13 +303,33 @@ export default {
         '400': '400ms',
         '600': '600ms',
       },
-      // Extended color palette for child-friendly design
+      // Extended color palette for modern educational design
       colors: {
-        // Keep existing Tailwind colors and add custom ones
-        'glass': {
-          light: 'rgba(255, 255, 255, 0.1)',
-          medium: 'rgba(255, 255, 255, 0.2)',
-          dark: 'rgba(255, 255, 255, 0.05)',
+        masterly: {
+          cream: '#FBF1EF',
+          creamLight: '#FCF2EB',
+          creamDark: '#FCEFEC',
+          card: '#FCF6F3',
+          panel: '#FDF5F1',
+          cardSoft: '#FEF4EF',
+          input: '#FAF0EE',
+          border: '#EEDACE',
+          inputBorder: '#A7A2A2',
+          navy: '#21283A',
+          navyDeep: '#24293C',
+          text: '#534C5E',
+          muted: '#94898E',
+          soft: '#C8B9B2',
+          orange: '#F87316',
+          orangeDeep: '#FC6F1F',
+          amber: '#FBB33E',
+          green: '#27B74A',
+          greenSoft: '#31BC5F',
+          blue: '#07A0FD',
+          blueSoft: '#3DA9D3',
+          pink: '#F670B1',
+          yellow: '#FD9D28',
+          red: '#FE3131',
         },
       },
       // Custom backdrop blur

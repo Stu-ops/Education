@@ -9,12 +9,12 @@ export default function MainLayout({ children }) {
 
   return (
     <div
-      className="h-screen w-screen bg-gradient-to-b from-blue-600 to-indigo-700 p-2 flex justify-center items-center"
+      className="min-h-screen w-screen bg-masterly-cream p-3 flex justify-center items-center"
       onClick={() => setIsChatExpanded(false)}
     >
       <div
-        className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl h-full 
-                   bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl 
+        className="w-full max-w-[440px] h-[calc(100vh-24px)] max-h-[860px]
+                   bg-masterly-cream rounded-[28px] border border-masterly-border shadow-xl 
                    p-4 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >

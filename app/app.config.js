@@ -7,25 +7,27 @@ export default {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
-    scheme: "mathgpt",
+    scheme: "masterly",
+    primaryColor: "#F97316",
 
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#2563EB"
+      backgroundColor: "#FAF2EF"
     },
 
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.mathgpt.app"
+      bundleIdentifier: "com.masterly.app",
+      backgroundColor: "#FAF2EF"
     },
 
     android: {
       label: "Masterly",             
-      package: "com.mathgpt.app",
+      package: "com.masterly.app",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#2563EB"
+        backgroundColor: "#21273A"
       }
     },
 
@@ -37,7 +39,7 @@ export default {
     plugins: ["expo-router"],
 
     extra: {
-      apiUrl: "https://api.masterly.co.in"
+      apiUrl: "http://192.168.1.12:8000"
     }
   }
 };

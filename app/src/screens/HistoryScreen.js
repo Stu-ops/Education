@@ -77,7 +77,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <LinearGradient colors={colors.gradients.main} style={styles.container}>
+    <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>

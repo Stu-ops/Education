@@ -11,8 +11,8 @@ import {
   Platform,
   ScrollView,
   Modal,
+  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '../contexts/UserContext';
 import colors from '../styles/colors';
 
@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [error, setError] = useState('');
-  const [isSignup, setIsSignup] = useState(false);
+  const [isSignup, setIsSignup] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showClassPicker, setShowClassPicker] = useState(false);
@@ -94,10 +94,20 @@ export default function LoginScreen({ navigation }) {
   const classOptions = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 
   return (
-    <LinearGradient
-      colors={['#2563EB', '#4338CA', '#3730A3']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      <Image
+        source={require('../../assets/illustrations/symbols.png')}
+        style={styles.symbolTop}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
+      <Image
+        source={require('../../assets/illustrations/symbols.png')}
+        style={styles.symbolBottom}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -115,58 +125,56 @@ export default function LoginScreen({ navigation }) {
               },
             ]}
           >
-            {/* Emoji */}
-            <Text style={styles.emoji}>{isSignup ? '🎓' : '👋'}</Text>
-
-            {/* Title */}
             <Text style={styles.title}>
-              {isSignup ? 'Join Math GPT!' : 'Welcome Back!'}
+              {isSignup ? 'Join Masterly' : 'Welcome Back'}
             </Text>
             <Text style={styles.subtitle}>
               {isSignup
-                ? 'Start your math learning journey'
+                ? 'Start your math journey'
                 : 'Continue your learning adventure'}
             </Text>
 
-            {/* Form */}
             <View style={styles.form}>
-              {/* Username Input */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Username"
-                  placeholderTextColor="rgba(255,255,255,0.5)"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                />
-              </View>
+              <Text style={styles.label}>Please enter Username</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                placeholderTextColor={colors.text.soft}
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+              />
 
-              {/* Class Level Picker (Signup only) */}
               {isSignup && (
-                <TouchableOpacity
-                  style={styles.inputContainer}
-                  onPress={() => setShowClassPicker(true)}
-                >
-                  <Text style={[styles.input, !classLevel && styles.placeholder]}>
-                    {classLevel ? `Class ${classLevel}` : 'Select class'}
-                  </Text>
-                </TouchableOpacity>
+                <>
+                  <Text style={styles.label}>Select Class</Text>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowClassPicker(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.inputText,
+                        !classLevel && styles.placeholder,
+                      ]}
+                    >
+                      {classLevel ? `Class ${classLevel}` : 'Select class'}
+                    </Text>
+                  </TouchableOpacity>
+                </>
               )}
 
-              {/* Password Input */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="rgba(255,255,255,0.5)"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-              </View>
+              <Text style={styles.label}>Please enter Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={colors.text.soft}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
-              {/* Error Message */}
               {error ? (
                 <Animated.View
                   style={[
@@ -174,46 +182,39 @@ export default function LoginScreen({ navigation }) {
                     { transform: [{ translateX: shakeAnim }] },
                   ]}
                 >
-                  <Text style={styles.errorText}>⚠️ {error}</Text>
+                  <Text style={styles.errorText}>{error}</Text>
                 </Animated.View>
               ) : null}
 
-              {/* Submit Button */}
               <TouchableOpacity
                 style={[styles.button, isLoading && styles.buttonDisabled]}
                 onPress={handleSubmit}
                 disabled={isLoading || showSuccess}
+                activeOpacity={0.85}
               >
-                <LinearGradient
-                  colors={['#22C55E', '#16A34A']}
-                  style={styles.buttonGradient}
-                >
-                  <Text style={styles.buttonText}>
-                    {isLoading
-                      ? 'Processing...'
-                      : showSuccess
-                      ? '✓ Success!'
-                      : isSignup
-                      ? 'Sign Up'
-                      : 'Login'}
-                  </Text>
-                </LinearGradient>
+                <Text style={styles.buttonText}>
+                  {isLoading
+                    ? 'Processing...'
+                    : showSuccess
+                    ? 'Success!'
+                    : isSignup
+                    ? 'SIGN UP'
+                    : 'LOGIN'}
+                </Text>
               </TouchableOpacity>
             </View>
 
-            {/* Toggle Mode */}
             <TouchableOpacity onPress={handleToggleMode}>
               <Text style={styles.toggleText}>
                 {isSignup
-                  ? 'Already have an account? Login'
-                  : "New user? Sign up"}
+                  ? 'Already have an account ? Login'
+                  : 'New user? Sign up'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Class Picker Modal */}
       <Modal
         visible={showClassPicker}
         transparent
@@ -257,23 +258,22 @@ export default function LoginScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* Success Modal */}
       {showSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successContent}>
-            <Text style={styles.successEmoji}>🎉</Text>
             <Text style={styles.successTitle}>Welcome!</Text>
             <Text style={styles.successSubtitle}>Redirecting...</Text>
           </View>
         </View>
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.primary.cream,
   },
   keyboardView: {
     flex: 1,
@@ -281,95 +281,117 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 32,
   },
   content: {
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: 32,
+    fontSize: 14,
+    color: colors.text.muted,
+    marginBottom: 24,
     textAlign: 'center',
   },
   form: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
+    maxWidth: 360,
+    backgroundColor: 'transparent',
+    padding: 0,
   },
-  inputContainer: {
-    marginBottom: 16,
+  label: {
+    fontSize: 13,
+    color: colors.text.muted,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    color: '#FFFFFF',
-    fontSize: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    backgroundColor: colors.primary.creamLight,
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    color: colors.text.primary,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+    marginBottom: 18,
+  },
+  inputText: {
+    color: colors.text.primary,
+    fontSize: 15,
   },
   placeholder: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.text.soft,
   },
   errorContainer: {
-    backgroundColor: 'rgba(239,68,68,0.2)',
-    borderWidth: 2,
-    borderColor: '#F87171',
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    padding: 10,
+    marginBottom: 12,
   },
   errorText: {
-    color: '#F87171',
-    fontSize: 14,
+    color: colors.accent.red,
+    fontSize: 13,
     textAlign: 'center',
   },
   button: {
-    borderRadius: 12,
-    overflow: 'hidden',
+    backgroundColor: colors.accent.orange,
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
-  buttonGradient: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.text.white,
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   toggleText: {
-    color: '#67E8F9',
-    fontSize: 14,
-    marginTop: 24,
+    color: colors.text.muted,
+    fontSize: 13,
+    marginTop: 20,
     textAlign: 'center',
+  },
+  symbolTop: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    width: 140,
+    height: 140,
+    opacity: 0.9,
+  },
+  symbolBottom: {
+    position: 'absolute',
+    bottom: -10,
+    right: -10,
+    width: 140,
+    height: 140,
+    opacity: 0.9,
+    transform: [{ rotate: '180deg' }],
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1E1B4B',
+    backgroundColor: colors.primary.creamLight,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -378,7 +400,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -390,18 +412,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.primary.cream,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
   },
   pickerItemSelected: {
-    backgroundColor: colors.primary.blue,
+    backgroundColor: colors.accent.orange,
+    borderColor: colors.accent.orangeDeep,
   },
   pickerItemText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: colors.text.primary,
+    fontSize: 15,
     textAlign: 'center',
   },
   pickerItemTextSelected: {
     fontWeight: 'bold',
+    color: colors.text.white,
   },
   modalClose: {
     marginTop: 16,
@@ -409,33 +435,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCloseText: {
-    color: '#67E8F9',
+    color: colors.text.muted,
     fontSize: 16,
   },
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   successContent: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 32,
+    backgroundColor: colors.primary.creamLight,
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 28,
     alignItems: 'center',
-  },
-  successEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
   },
   successTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   successSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    color: colors.text.muted,
     marginTop: 8,
   },
 });

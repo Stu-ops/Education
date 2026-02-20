@@ -1,7 +1,6 @@
 // FeatureGrid component adapted from web app for React Native
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getTopics } from '../utils/exploreApi';
@@ -28,11 +27,11 @@ export default function FeatureGrid({ onTopicClick }) {
   };
 
   const icons = ['123', '+', '−', '⬤'];
-  const gradients = [
-    ['#A855F7', '#EC4899'],
-    ['#3B82F6', '#06B6D4'],
-    ['#22C55E', '#10B981'],
-    ['#F97316', '#EAB308'],
+  const badgeColors = [
+    colors.accent.pink,
+    colors.accent.blue,
+    colors.accent.green,
+    colors.accent.orange,
   ];
 
   const features = topics.length > 0
@@ -41,87 +40,46 @@ export default function FeatureGrid({ onTopicClick }) {
           ? ['संख्याएँ', 'जोड़', 'घटाव', 'आकार'][i] || topic
           : topic,
         icon: icons[i] || '❖',
-        gradient: gradients[i] || gradients[0],
+        color: badgeColors[i] || colors.accent.orange,
       }))
     : [];
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <ActivityIndicator size="large" color={colors.accent.orange} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Browse Teachers Card */}
-      {/* <LinearGradient
-        colors={['rgba(34,197,94,0.2)', 'rgba(16,185,129,0.2)']}
-        style={styles.teacherCard}
-      >
-        <View style={styles.teacherCardContent}>
-          <View style={styles.teacherCardText}>
-            <Text style={styles.teacherCardTitle}>
-              {lang === 'hi' ? 'शिक्षक खोजें' : 'Browse Teachers'}
-            </Text>
-            <Text style={styles.teacherCardSubtitle}>
-              {lang === 'hi' ? 'वीडियो लेक्चर देखें' : 'Watch video lectures'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.teacherCardButton}
-            onPress={() => {
-              // Navigate to find teachers (student feature)
-              router.push('/student/find-teachers');
-            }}
-          >
-            <LinearGradient
-              colors={['#22C55E', '#10B981']}
-              style={styles.teacherCardButtonGradient}
-            >
-              <Text style={styles.teacherCardButtonText}>
-                {lang === 'hi' ? 'खोजें' : 'Browse'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+      <View style={styles.card}>
+        <View style={styles.cardText}>
+          <Text style={styles.cardTitle}>{lang === 'hi' ? 'शिक्षक खोजें' : 'Browse Teachers'}</Text>
+          <Text style={styles.cardSubtitle}>{lang === 'hi' ? 'वीडियो लेक्चर देखें और सीखें' : 'Watch video lectures and learn'}</Text>
         </View>
-      </LinearGradient> */}
+        <TouchableOpacity
+          style={[styles.cardButton, { backgroundColor: colors.accent.green }]}
+          onPress={() => router.push('/student/find-teachers')}
+        >
+          <Text style={styles.cardButtonText}>{lang === 'hi' ? 'खोजें' : 'Browse'}</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* My Teachers Card */}
-      <LinearGradient
-        colors={['rgba(249,115,22,0.2)', 'rgba(239,68,68,0.2)']}
-        style={styles.teacherCard}
-      >
-        <View style={styles.teacherCardContent}>
-          <View style={styles.teacherCardText}>
-            <Text style={styles.teacherCardTitle}>
-              {lang === 'hi' ? 'मेरे शिक्षक' : 'My Teachers'}
-            </Text>
-            <Text style={styles.teacherCardSubtitle}>
-              {lang === 'hi' ? 'नामांकित शिक्षक' : 'Enrolled teachers'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.teacherCardButton}
-            onPress={() => {
-              // Navigate to my teachers (student feature)
-              router.push('/student/my-teachers');
-            }}
-          >
-            <LinearGradient
-              colors={['#F97316', '#EF4444']}
-              style={styles.teacherCardButtonGradient}
-            >
-              <Text style={styles.teacherCardButtonText}>
-                {lang === 'hi' ? 'देखें' : 'View'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+      <View style={styles.card}>
+        <View style={styles.cardText}>
+          <Text style={styles.cardTitle}>{lang === 'hi' ? 'मेरे शिक्षक' : 'My Teachers'}</Text>
+          <Text style={styles.cardSubtitle}>{lang === 'hi' ? 'आपके नामांकित शिक्षकों की सामग्री देखें' : 'Access content from your enrolled teachers'}</Text>
         </View>
-      </LinearGradient>
+        <TouchableOpacity
+          style={[styles.cardButton, { backgroundColor: colors.accent.orange }]}
+          onPress={() => router.push('/student/my-teachers')}
+        >
+          <Text style={styles.cardButtonText}>{lang === 'hi' ? 'देखें' : 'View'}</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Math Topics - Horizontal Row */}
       <View style={styles.topicsRow}>
         {features.map((f, i) => (
           <TouchableOpacity
@@ -130,12 +88,10 @@ export default function FeatureGrid({ onTopicClick }) {
             onPress={() => onTopicClick(f.label)}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={f.gradient}
-              style={styles.topicIcon}
+            <View style={[styles.topicIcon, { backgroundColor: f.color }]}
             >
               <Text style={styles.topicIconText}>{f.icon}</Text>
-            </LinearGradient>
+            </View>
             <Text style={styles.topicLabel} numberOfLines={1}>{f.label}</Text>
           </TouchableOpacity>
         ))}
@@ -152,58 +108,54 @@ const styles = StyleSheet.create({
     padding: 40,
     alignItems: 'center',
   },
-  teacherCard: {
-    borderRadius: 12,
+  card: {
+    borderRadius: 16,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  teacherCardContent: {
+    borderColor: colors.primary.border,
+    backgroundColor: colors.primary.creamLight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  teacherCardText: {
+  cardText: {
     flex: 1,
   },
-  teacherCardTitle: {
-    fontSize: 16,
+  cardTitle: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
-  teacherCardSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+  cardSubtitle: {
+    fontSize: 11,
+    color: colors.text.muted,
     marginTop: 2,
   },
-  teacherCardButton: {
-    borderRadius: 8,
-    overflow: 'hidden',
+  cardButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 16,
   },
-  teacherCardButtonGradient: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  teacherCardButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+  cardButtonText: {
+    color: colors.text.white,
+    fontSize: 12,
     fontWeight: '600',
   },
   topicsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 6,
     gap: 8,
   },
   topicItem: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
+    backgroundColor: colors.primary.creamLight,
+    borderRadius: 16,
     padding: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.primary.border,
   },
   topicIcon: {
     width: 36,
@@ -215,11 +167,11 @@ const styles = StyleSheet.create({
   },
   topicIconText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text.white,
   },
   topicLabel: {
     fontSize: 10,
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontWeight: '500',
     textAlign: 'center',
   },

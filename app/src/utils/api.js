@@ -70,10 +70,21 @@ export const sendToGemini = async (input, username) => {
     if (!username) throw new Error('Username is required');
 
     const response = await postRequest(`/chat/send/instant/${username}`, payload);
-    const botMessage = response.bot_message?.text || 'No reply.';
+    const botMessage =
+      response.bot_message?.text ||
+      response.bot_message ||
+      'No reply.';
+    const botImage =
+      response.bot_message?.image ||
+      response.bot_message?.image_url ||
+      response.image ||
+      response.image_url ||
+      null;
 
     return {
       candidates: [{ content: { parts: [{ text: botMessage }] } }],
+      image: botImage,
+      bot_message: response.bot_message,
     };
   } catch (error) {
     console.error('Backend call failed:', error);

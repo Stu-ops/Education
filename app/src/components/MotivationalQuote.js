@@ -1,14 +1,14 @@
 // MotivationalQuote component for first load overlay
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import colors from '../styles/colors';
 
 const quotes = [
-  { text: "Math is not about numbers, it's about understanding.", emoji: "🧠" },
-  { text: "Every problem has a solution. Keep trying!", emoji: "💪" },
-  { text: "Practice makes perfect. You're doing great!", emoji: "⭐" },
-  { text: "Learning is a journey, not a destination.", emoji: "🚀" },
-  { text: "Mistakes are proof that you're trying.", emoji: "🌟" },
+  { text: "Math is not about numbers, it's about understanding.", emoji: "✨" },
+  { text: "Every problem has a solution. Keep trying!", emoji: "🚀" },
+  { text: "Practice makes perfect. You're doing great!", emoji: "🌟" },
+  { text: "Learning is a journey, not a destination.", emoji: "📘" },
+  { text: "Mistakes are proof that you're trying.", emoji: "💡" },
 ];
 
 export default function MotivationalQuote({ onComplete }) {
@@ -17,7 +17,6 @@ export default function MotivationalQuote({ onComplete }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Fade in
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -32,7 +31,6 @@ export default function MotivationalQuote({ onComplete }) {
       }),
     ]).start();
 
-    // Auto dismiss after 3 seconds
     const timer = setTimeout(() => {
       handleDismiss();
     }, 3000);
@@ -63,10 +61,7 @@ export default function MotivationalQuote({ onComplete }) {
       activeOpacity={1}
       onPress={handleDismiss}
     >
-      <LinearGradient
-        colors={['rgba(37,99,235,0.95)', 'rgba(67,56,202,0.95)']}
-        style={styles.gradient}
-      >
+      <View style={styles.gradient}>
         <Animated.View
           style={[
             styles.content,
@@ -80,7 +75,7 @@ export default function MotivationalQuote({ onComplete }) {
           <Text style={styles.quote}>{quote.text}</Text>
           <Text style={styles.tapHint}>Tap to continue</Text>
         </Animated.View>
-      </LinearGradient>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -95,6 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    backgroundColor: colors.primary.cream,
   },
   content: {
     alignItems: 'center',
@@ -104,15 +100,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   quote: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     textAlign: 'center',
-    lineHeight: 34,
-    marginBottom: 32,
+    lineHeight: 32,
+    marginBottom: 24,
   },
   tapHint: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.text.muted,
   },
 });

@@ -71,7 +71,7 @@ export default function BottomNav({ setIsChatExpanded }) {
   ];
 
   return (
-    <nav className="flex justify-around items-center bg-white/10 backdrop-blur-lg rounded-2xl py-3 px-2 mt-2 text-white shadow-lg">
+    <nav className="flex justify-around items-center masterly-surface-dark rounded-[20px] py-2.5 px-2 mt-3 text-white shadow-lg">
       {navItems.map((n, i) => {
         const isActive = location.pathname === n.path;
         
@@ -90,21 +90,15 @@ export default function BottomNav({ setIsChatExpanded }) {
             aria-label={n.label}
             aria-current={isActive ? 'page' : undefined}
           >
-            {/* Hint pulse for new features */}
             {n.showHint && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-hint-pulse" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-masterly-orange rounded-full" />
             )}
-            
-            {/* Active indicator - gradient underline */}
-            {isActive && (
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-slide-in-bottom" />
-            )}
-            
-            {/* Icon with gradient for active state */}
+
+            {/* Icon */}
             <div className={`
               transition-all duration-200
               ${isActive 
-                ? 'bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent' 
+                ? 'text-masterly-orange' 
                 : 'text-white/70 hover:text-white'
               }
             `}>
@@ -113,10 +107,10 @@ export default function BottomNav({ setIsChatExpanded }) {
             
             {/* Label with fade transition */}
             <span className={`
-              text-xs transition-all duration-200
+              text-[10px] transition-all duration-200
               ${isActive 
-                ? 'opacity-100 font-semibold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent' 
-                : 'opacity-70 hover:opacity-100'
+                ? 'opacity-100 font-semibold text-masterly-orange' 
+                : 'opacity-70 hover:opacity-100 text-white/70'
               }
             `}>
               {n.label}

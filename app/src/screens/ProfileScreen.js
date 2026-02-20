@@ -69,7 +69,7 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={colors.gradients.main} style={styles.container}>
+      <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
         <SafeAreaView style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FFFFFF" />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -80,7 +80,7 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <LinearGradient colors={colors.gradients.main} style={styles.container}>
+      <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
         <SafeAreaView style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Please log in to view profile</Text>
         </SafeAreaView>
@@ -172,7 +172,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <LinearGradient colors={colors.gradients.main} style={styles.container}>
+    <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea}>
         <ScrollView 
@@ -389,7 +389,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <LinearGradient
-                  colors={['#22C55E', '#16A34A']}
+                  colors={['#10B981', '#059669']}
                   style={styles.actionButtonGradient}
                   pointerEvents="none"
                 >

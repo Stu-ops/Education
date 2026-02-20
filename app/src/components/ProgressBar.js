@@ -44,14 +44,14 @@ export default function ProgressBar({ loading }) {
 const styles = StyleSheet.create({
   container: {
     height: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.primary.creamDark,
     borderRadius: 2,
     overflow: 'hidden',
     marginVertical: 8,
   },
   progress: {
     height: '100%',
-    backgroundColor: colors.primary.cyan,
+    backgroundColor: colors.accent.orange,
     borderRadius: 2,
   },
 });

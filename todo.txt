@@ -1,0 +1,7 @@
+- [x] Locate the "figma designs" assets and confirm which files to use for theme/icon updates. (Folder not found; used /image references)
+- [x] Update Vite web theme (colors, typography, components) to match reference images.
+- [x] Update Vite web icon/favicon to match reference.
+- [x] Update Expo app theme and icons to match reference.
+- [x] Update mobile app screens to match reference images (login/home/explore/history/profile).
+- [x] Verify all pages in Vite project align with new theme.
+- [x] Mark this todo as done.

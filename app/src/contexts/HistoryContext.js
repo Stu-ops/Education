@@ -1,6 +1,8 @@
 // HistoryContext adapted from web app for React Native
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import storage from '../utils/storage';
+import { BACKEND_URL } from '../utils/api';
+import { useUser } from './UserContext';
 import { apiLogger } from '../utils/config';
 
 export const HistoryContext = createContext();
@@ -11,17 +13,46 @@ export function useHistoryStore() {
 
 export function HistoryProvider({ children }) {
   const [history, setHistory] = useState([]);
+  const { user } = useUser();
 
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [user?.username]);
 
   const loadHistory = async () => {
     try {
       const savedHistory = await storage.getItem('chatHistory');
-      apiLogger('localStorage/chatHistory', 'GET', savedHistory ? JSON.parse(savedHistory) : []);
-      if (savedHistory) {
-        setHistory(JSON.parse(savedHistory));
+      const localHistory = savedHistory ? JSON.parse(savedHistory) : [];
+      apiLogger('localStorage/chatHistory', 'GET', localHistory);
+
+      let remoteHistory = [];
+      if (user?.username) {
+        try {
+          const res = await fetch(`${BACKEND_URL}/chat/user/${user.username}`);
+          if (res.ok) {
+            const data = await res.json();
+            remoteHistory = Array.isArray(data) ? data : [];
+          }
+        } catch (remoteError) {
+          apiLogger('remoteHistory', 'GET', null, remoteError);
+        }
+      }
+
+      const normalize = (item, index) => ({
+        id: item.id ?? item.session_id ?? `${Date.now()}-${index}`,
+        session_id: item.session_id ?? item.sessionId ?? null,
+        title: item.title ?? item.messages?.[0]?.text?.slice(0, 30) ?? 'New Chat',
+        messages: item.messages ?? item.chat ?? [],
+        timestamp: item.timestamp ?? item.created_at ?? Date.now(),
+      });
+
+      const finalHistory = remoteHistory.length
+        ? remoteHistory.map(normalize)
+        : localHistory.map(normalize);
+
+      setHistory(finalHistory);
+      if (remoteHistory.length) {
+        saveHistory(finalHistory);
       }
     } catch (error) {
       apiLogger('localStorage/chatHistory', 'GET', null, error);

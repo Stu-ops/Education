@@ -1,7 +1,6 @@
 // Header component adapted from web app for React Native
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { resetSession } from '../utils/api';
@@ -17,7 +16,7 @@ export default function Header({ onReset }) {
 
     Animated.sequence([
       Animated.timing(scaleAnim, {
-        toValue: 1.1,
+        toValue: 1.05,
         duration: 150,
         useNativeDriver: true,
       }),
@@ -33,64 +32,36 @@ export default function Header({ onReset }) {
   };
 
   return (
-    <LinearGradient
-      colors={['#2563EB', '#4F46E5']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={styles.content}>
-        {/* Logo */}
-        <TouchableOpacity onPress={handleReset} activeOpacity={0.8}>
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Text style={styles.logo}>📘 Masterly</Text>
-            <Text style={styles.tagline}>
-              {lang === 'hi' ? 'गणित सीखने में मज़ा आता है!' : 'Learning math is fun!'}
-            </Text>
+        <TouchableOpacity onPress={handleReset} activeOpacity={0.8} style={styles.logoWrap}>
+          <Animated.View style={{ transform: [{ scale: scaleAnim }], flexDirection: 'row', alignItems: 'center' }}>
+            <Image source={require('../../assets/icon.png')} style={styles.logoIcon} />
+            <Text style={styles.logoText}>Masterly</Text>
           </Animated.View>
         </TouchableOpacity>
 
-        {/* Controls */}
         <View style={styles.controls}>
-          {/* Parent Portal Link */}
-          <TouchableOpacity
-            style={styles.parentButton}
-            onPress={() => router.push('/parent/login')}
-          >
-            <Text style={styles.parentEmoji}>👨‍👩‍👧</Text>
+          <TouchableOpacity style={styles.langToggle} onPress={toggleLang}>
+            <Text style={[styles.langText, lang === 'hi' && styles.langTextActive]}>हि</Text>
+            <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>A</Text>
           </TouchableOpacity>
 
-          {/* Language Toggle */}
-          <TouchableOpacity style={styles.langToggle} onPress={toggleLang}>
-            <View style={styles.langOptions}>
-              <Text
-                style={[
-                  styles.langText,
-                  lang === 'hi' && styles.langTextActive,
-                ]}
-              >
-                अ
-              </Text>
-              <Text
-                style={[
-                  styles.langText,
-                  lang === 'en' && styles.langTextActive,
-                ]}
-              >
-                A
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.profileCircle}>
+            <Text style={styles.profileText}>T</Text>
+          </View>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.primary.navy,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     marginBottom: 8,
   },
   content: {
@@ -98,47 +69,57 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  logoWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  tagline: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
+  logoIcon: {
+    width: 28,
+    height: 24,
+    marginRight: 8,
+    resizeMode: 'contain',
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text.white,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  parentButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  parentEmoji: {
-    fontSize: 18,
+    gap: 8,
   },
   langToggle: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  langOptions: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    gap: 6,
   },
   langText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '500',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   langTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: colors.text.white,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    fontWeight: '700',
+  },
+  profileCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.accent.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileText: {
+    color: colors.text.white,
+    fontWeight: '700',
   },
 });

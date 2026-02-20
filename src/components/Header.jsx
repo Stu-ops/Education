@@ -1,6 +1,7 @@
-import { useLanguage } from "../hooks/useLanguage";
+﻿import { useLanguage } from "../hooks/useLanguage";
 import { resetSession } from "../utils/api";
 import { useState } from "react";
+import { Users } from "lucide-react";
 
 export default function Header() {
   const { lang, toggleLang } = useLanguage();
@@ -26,87 +27,42 @@ export default function Header() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl px-4 py-3 shadow-lg animate-pulse-glow select-none">
-      {/* Animated gradient background with subtle pulse effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 opacity-50 animate-shimmer bg-[length:200%_100%]"></div>
-      
-      <div className="relative flex justify-between items-center">
-        {/* Logo with bounce animation on click */}
-        <div className="flex flex-col gap-1">
-          <h1
-            onClick={handleReset}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleReset();
-              }
-            }}
-            className={`text-2xl lg:text-3xl font-bold text-white cursor-pointer hover:text-cyan-300 transition-colors duration-200 ${
-              isLogoAnimating ? "animate-bounce-in" : ""
-            }`}
-            style={{
-              transform: isLogoAnimating ? "scale(1.1)" : "scale(1)",
-              transition: "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-            }}
-            title="Click to reset session"
-            role="button"
-            tabIndex={0}
-            aria-label="Math GPT - Click to reset session"
-          >
-            📘 Math GPT
-          </h1>
-          
-          {/* Welcome message with fade-in animation */}
-          <p className="text-xs lg:text-sm text-white/80 animate-fade-in animation-delay-300">
-            {lang === "hi" ? "गणित सीखने में मज़ा आता है!" : "Learning math is fun!"}
-          </p>
-        </div>
+    <div className="masterly-surface-dark rounded-[20px] px-4 py-3 shadow-lg select-none">
+      <div className="flex justify-between items-center gap-3">
+        <button
+          onClick={handleReset}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleReset();
+            }
+          }}
+          className="flex items-center gap-2 text-white hover:text-white/90 transition-colors"
+          title="Click to reset session"
+          aria-label="Masterly - Click to reset session"
+        >
+          <img
+            src="/assets/icons/logo.png"
+            alt="Masterly logo"
+            className={`w-9 h-8 ${isLogoAnimating ? "animate-bounce-in" : ""}`}
+          />
+          <span className="text-lg font-semibold tracking-tight">Masterly</span>
+        </button>
 
-        {/* Controls section with parent portal and language toggle */}
-        <div className="flex items-center gap-3">
-          {/* Parent Portal Link */}
-          <a
-            href="/parent/login"
-            className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-white/30 transition-all duration-200 min-h-[44px] flex items-center gap-2"
-            aria-label="Access Parent Portal"
-          >
-            <span className="text-lg">👨‍👩‍👧</span>
-            <span className="hidden sm:inline">Parent</span>
-          </a>
+        <div className="flex items-center gap-2">
 
-          {/* Language toggle with smooth transition and slide indicator */}
-          <div className="relative">
-            <button
-              onClick={toggleLang}
-              className="relative bg-white/20 backdrop-blur-sm text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-white/30 transition-all duration-200 overflow-hidden min-h-[44px] min-w-[44px]"
-              aria-label={`Switch language to ${lang === "hi" ? "English" : "Hindi"}`}
-            >
-              {/* Slide indicator background */}
-              <div
-                className={`absolute inset-y-0 w-1/2 bg-cyan-400 rounded-full transition-transform duration-300 ease-out ${
-                  lang === "hi" ? "translate-x-0" : "translate-x-full"
-                }`}
-                style={{ left: 0 }}
-              ></div>
-              
-              {/* Language text */}
-              <div className="relative flex gap-3 items-center justify-center">
-                <span
-                  className={`transition-all duration-200 ${
-                    lang === "hi" ? "text-white font-bold scale-110" : "text-white/70"
-                  }`}
-                >
-                  अ
-                </span>
-                <span
-                  className={`transition-all duration-200 ${
-                    lang === "en" ? "text-white font-bold scale-110" : "text-white/70"
-                  }`}
-                >
-                  A
-                </span>
-              </div>
-            </button>
+
+          <button
+            onClick={toggleLang}
+            className="flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-1 text-[11px] text-white/80 hover:text-white transition-colors"
+            aria-label={`Switch language to ${lang === "hi" ? "English" : "Hindi"}`}
+          >
+            <span className={`px-2 py-0.5 rounded-full ${lang === "hi" ? "bg-white/20 text-white" : ""}`}>à¤…</span>
+            <span className={`px-2 py-0.5 rounded-full ${lang === "en" ? "bg-white/20 text-white" : ""}`}>A</span>
+          </button>
+
+          <div className="w-8 h-8 rounded-full bg-masterly-orange text-white font-semibold flex items-center justify-center border border-white/30 shadow-sm">
+            A
           </div>
         </div>
       </div>

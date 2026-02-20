@@ -51,7 +51,7 @@ export default function HomeScreen({ route }) {
 
   return (
     <LinearGradient
-      colors={['#2563EB', '#4338CA']}
+      colors={['#6366F1', '#8B5CF6', '#A855F7']}
       style={styles.container}
     >
       <StatusBar barStyle="light-content" />

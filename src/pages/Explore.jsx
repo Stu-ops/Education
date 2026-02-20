@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getExploreData } from "../utils/exploreApi";
 import CircularProgress from "../components/CircularProgress";
 import Confetti from "../components/Confetti";
 import BadgeUnlock from "../components/BadgeUnlock";
+import { BookOpen, Clock, Flame, Target, Trophy, Medal, Gem, Star, Coins } from "lucide-react";
 
 export default function Explore() {
   const [data, setData] = useState(null);
@@ -16,7 +17,6 @@ export default function Explore() {
     getExploreData().then(setData);
   }, []);
 
-  // Count-up animation for accuracy
   useEffect(() => {
     if (data?.accuracy) {
       const duration = 1500;
@@ -38,7 +38,6 @@ export default function Explore() {
     }
   }, [data?.accuracy]);
 
-  // Check for goal completion and trigger confetti
   useEffect(() => {
     if (data?.weeklyGoal) {
       const progress = (data.weeklyGoal.solved / data.weeklyGoal.goal) * 100;
@@ -49,217 +48,193 @@ export default function Explore() {
     }
   }, [data?.weeklyGoal]);
 
-  // Check for streak milestones and trigger badge unlock
   useEffect(() => {
     if (data?.practice?.streak && previousStreak > 0) {
       const currentStreak = data.practice.streak;
       const milestones = [3, 7, 14, 30, 60, 100];
-      
-      // Check if we just hit a milestone
+
       const justUnlockedMilestone = milestones.find(
-        milestone => currentStreak >= milestone && previousStreak < milestone
+        (milestone) => currentStreak >= milestone && previousStreak < milestone
       );
-      
+
       if (justUnlockedMilestone) {
         setUnlockedBadge({
-          icon: "🔥",
+          icon: "streak",
           title: `${justUnlockedMilestone} Day Streak!`,
-          description: `Amazing! You've practiced for ${justUnlockedMilestone} days in a row!`
+          description: `Amazing! You've practiced for ${justUnlockedMilestone} days in a row!`,
         });
         setShowBadgeUnlock(true);
         setTimeout(() => setShowBadgeUnlock(false), 2500);
       }
     }
-    
+
     if (data?.practice?.streak) {
       setPreviousStreak(data.practice.streak);
     }
   }, [data?.practice?.streak]);
 
-  if (!data) return <div className="text-white p-4">Loading...</div>;
+  if (!data) return <div className="text-masterly-navy p-4">Loading...</div>;
 
-  const { progress, accuracy, practice, strengths, weeklyGoal, badges } = data;
+  const { progress, practice, strengths, weeklyGoal, badges } = data;
 
   return (
-    <div className="p-4 text-white space-y-4 animate-page-fade-in">
-      {/* Confetti animation on goal completion */}
-      {showConfetti && <Confetti />}
+  <div className="min-h-screen bg-[#F6EDEA] p-4 text-[#1F2A44] space-y-4">
+    {showConfetti && <Confetti />}
+    {showBadgeUnlock && unlockedBadge && (
+      <BadgeUnlock badge={unlockedBadge} onComplete={() => setShowBadgeUnlock(false)} />
+    )}
+
+    {/* Top Grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       
-      {/* Badge unlock animation */}
-      {showBadgeUnlock && unlockedBadge && (
-        <BadgeUnlock badge={unlockedBadge} onComplete={() => setShowBadgeUnlock(false)} />
-      )}
+      {/* Progress Overview */}
+      <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6 text-center">
+        <h3 className="font-semibold mb-4">Progress Overview</h3>
+        <CircularProgress percentage={progress.percentage} />
+        <p className="text-sm mt-4 text-gray-500">
+          Topics mastered {progress.mastered} / {progress.total}
+        </p>
+      </div>
+
+      {/* Accuracy */}
+      <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6 text-center flex flex-col justify-center">
+        <h3 className="font-semibold mb-2">Accuracy</h3>
+        <p className="text-4xl font-bold text-green-500">
+          {animatedAccuracy}%
+        </p>
+        <p className="text-sm text-gray-500 mt-2">Last 7 days</p>
+      </div>
+    </div>
+
+    {/* Practice & Strength */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       
-      {/* Row 1: Progress + Accuracy */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center animate-fade-in">
-          <h3 className="font-semibold mb-4 text-base sm:text-lg">Progress Overview</h3>
-          {/* Mobile: 120px, Desktop (lg+): 160px */}
-          <div className="block lg:hidden">
-            <CircularProgress percentage={progress.percentage} size="mobile" />
+      {/* Practice */}
+      <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6 text-center">
+        <h3 className="font-semibold mb-4">Practice & Engagement</h3>
+
+        <div className="flex justify-center gap-4 mb-4">
+          <div className="bg-[#FBECE8] p-4 rounded-xl w-24">
+            <BookOpen size={18} className="mx-auto mb-1 text-orange-500" />
+            <p className="font-bold">{practice.problems}</p>
+            <p className="text-xs text-gray-500">Problems</p>
           </div>
-          <div className="hidden lg:block">
-            <CircularProgress percentage={progress.percentage} size="desktop" />
+
+          <div className="bg-[#FBECE8] p-4 rounded-xl w-24">
+            <Clock size={18} className="mx-auto mb-1 text-green-500" />
+            <p className="font-bold">{practice.minutes}</p>
+            <p className="text-xs text-gray-500">Minutes</p>
           </div>
-          <p className="text-xs sm:text-sm mt-4 text-gray-300">
-            Topics mastered {progress.mastered} / {progress.total}
-          </p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center items-center animate-fade-in relative">
-          <h3 className="font-semibold mb-2 text-base sm:text-lg">Accuracy</h3>
-          <div className="relative">
-            <p className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              {animatedAccuracy}%
-            </p>
-            {/* Sparkle effects for high accuracy */}
-            {accuracy >= 90 && (
-              <>
-                <span className="absolute -top-2 -right-2 text-yellow-400 animate-bounce">✨</span>
-                <span className="absolute -bottom-2 -left-2 text-yellow-400 animate-bounce animation-delay-300">✨</span>
-              </>
-            )}
-          </div>
-          <p className="text-xs sm:text-sm text-gray-300 mt-2">Last 7 days</p>
+        <div className="bg-[#FBECE8] inline-flex items-center gap-2 px-4 py-2 rounded-full">
+          <Flame size={16} className="text-orange-500" />
+          <span className="font-semibold text-orange-500">
+            {practice.streak} day streak
+          </span>
         </div>
       </div>
 
-      {/* Row 2: Practice + Strengths */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center animate-fade-in">
-          <h3 className="font-semibold mb-4 text-base sm:text-lg">Practice & Engagement</h3>
-          <div className="flex gap-4 sm:gap-6 mb-4">
-            <div className="text-center bg-white/10 rounded-xl p-3 min-w-[80px]">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <span className="text-blue-400">📝</span>
-                <p className="text-xl sm:text-2xl font-bold">{practice.problems}</p>
-              </div>
-              <p className="text-xs text-gray-300">Problems</p>
-            </div>
-            <div className="text-center bg-white/10 rounded-xl p-3 min-w-[80px]">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <span className="text-green-400">⏱️</span>
-                <p className="text-xl sm:text-2xl font-bold">{practice.minutes}</p>
-              </div>
-              <p className="text-xs text-gray-300">Minutes</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 px-4 py-2 rounded-full">
-            <span className="text-2xl animate-streak-fire">🔥</span>
-            <p className="text-orange-400 font-bold text-sm sm:text-base">{practice.streak} day streak</p>
-          </div>
-        </div>
+      {/* Strengths */}
+      <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6">
+        <h3 className="font-semibold mb-4">Strengths & Focus</h3>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 animate-fade-in">
-          <h3 className="font-semibold mb-4 text-base sm:text-lg">Strengths & Focus</h3>
-          <div className="space-y-3 text-sm">
-            <div className="bg-white/10 rounded-lg p-3">
-              <span className="font-bold text-green-400">💪 Strongest: </span>
-              <span className="text-gray-200">{strengths.strongest}</span>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <span className="font-bold text-blue-400">🎯 Focus area: </span>
-              <span className="text-gray-200">{strengths.focus}</span>
-            </div>
+        <div className="space-y-3">
+          <div className="bg-[#FBECE8] p-3 rounded-lg">
+            <span className="font-semibold text-orange-500">🔥 Streaks! </span>
+            {practice.streak}
           </div>
-        </div>
-      </div>
 
-      {/* Weekly Goal */}
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 animate-fade-in relative">
-        <h3 className="font-semibold mb-4 text-base sm:text-lg">Weekly Goal 🎯</h3>
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-sm text-gray-300">
-            Problems solved: <span className="font-bold text-white">{weeklyGoal.solved}</span>
-          </p>
-          <p className="text-sm text-gray-300">
-            Goal: <span className="font-bold text-white">{weeklyGoal.goal}</span>
-          </p>
-        </div>
-        
-        {/* Animated progress bar */}
-        <div className="w-full h-4 bg-white/20 rounded-full overflow-hidden mb-4 relative">
-          <div
-            className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all duration-500 ease-out relative"
-            style={{ 
-              width: `${Math.min((weeklyGoal.solved / weeklyGoal.goal) * 100, 100)}%`,
-              boxShadow: "0 0 10px rgba(74, 222, 128, 0.5)"
-            }}
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" 
-                 style={{ backgroundSize: "200% 100%" }} />
+          <div className="bg-[#FBECE8] p-3 rounded-lg">
+            <span className="font-semibold text-blue-500">🎯 Focus area: </span>
+            {strengths.focus}
           </div>
-          {/* Percentage text */}
-          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
-            {Math.round((weeklyGoal.solved / weeklyGoal.goal) * 100)}%
-          </div>
-        </div>
-        
-        {/* Goal input section */}
-        <div className="flex gap-2 items-center">
-          <label className="text-sm text-gray-300">Set new goal:</label>
-          <input
-            type="number"
-            value={weeklyGoal.goal}
-            onChange={(e) =>
-              setData(prev => ({
-                ...prev,
-                weeklyGoal: { ...prev.weeklyGoal, goal: Number(e.target.value) },
-              }))
-            }
-            className="px-3 py-2 rounded-lg text-black w-20 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all"
-          />
-          <button
-            onClick={() => {
-              alert("Goal updated!");
-            }}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:brightness-110 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95"
-          >
-            Set
-          </button>
-        </div>
-        
-        {/* Goal completion celebration */}
-        {(weeklyGoal.solved / weeklyGoal.goal) >= 1 && (
-          <div className="mt-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg p-3 text-center animate-bounce-in">
-            <span className="text-2xl">🎉</span>
-            <p className="text-sm font-bold text-green-400">Goal Completed!</p>
-          </div>
-        )}
-      </div>
-
-      {/* Badges */}
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-lg animate-fade-in">
-        <h3 className="font-semibold mb-4 text-base sm:text-lg">Badges & Rewards 🏆</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {badges.map((badge, idx) => {
-            // Rotate through colorful gradient backgrounds
-            const gradients = [
-              "from-yellow-400 to-orange-500",
-              "from-green-400 to-blue-500",
-              "from-purple-400 to-pink-500",
-              "from-blue-400 to-indigo-500",
-              "from-pink-400 to-red-500",
-              "from-indigo-400 to-purple-500",
-            ];
-            const gradient = gradients[idx % gradients.length];
-            
-            return (
-              <div
-                key={idx}
-                className={`bg-gradient-to-br ${gradient} p-4 rounded-xl text-center font-semibold text-white shadow-lg hover:shadow-2xl hover:-translate-y-2 hover:rotate-2 transition-all duration-300 cursor-pointer animate-scale-in`}
-                style={{ animationDelay: `${idx * 50}ms` }}
-              >
-                <div className="text-2xl mb-1">
-                  {idx === 0 ? "🌟" : idx === 1 ? "🎯" : idx === 2 ? "🔥" : idx === 3 ? "💎" : idx === 4 ? "🚀" : "⭐"}
-                </div>
-                <p className="text-xs sm:text-sm">{badge}</p>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>
-  );
+
+    {/* Weekly Goal */}
+    <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6">
+      <h3 className="font-semibold mb-4 flex items-center gap-2">
+        Weekly Goal <Trophy size={16} className="text-orange-500" />
+      </h3>
+
+      <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <span>Problems solved: {weeklyGoal.solved}</span>
+        <span>Goal: {weeklyGoal.goal}</span>
+      </div>
+
+      <div className="w-full bg-[#FBECE8] h-4 rounded-full mb-4 relative">
+        <div
+          className="h-4 bg-orange-400 rounded-full"
+          style={{
+            width: `${Math.min(
+              (weeklyGoal.solved / weeklyGoal.goal) * 100,
+              100
+            )}%`,
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+          {Math.round(
+            (weeklyGoal.solved / weeklyGoal.goal) * 100
+          )}%
+        </div>
+      </div>
+
+      <div className="flex gap-2 items-center">
+        <input
+          type="number"
+          value={weeklyGoal.goal}
+          onChange={(e) =>
+            setData((prev) => ({
+              ...prev,
+              weeklyGoal: {
+                ...prev.weeklyGoal,
+                goal: Number(e.target.value),
+              },
+            }))
+          }
+          className="px-3 py-2 rounded-lg border border-[#F0DAD2] bg-white w-20"
+        />
+
+        <button className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
+          Set
+        </button>
+      </div>
+    </div>
+
+    {/* Badges */}
+    <div className="bg-[#FBF1EF] border border-[#F0DAD2] rounded-2xl p-6">
+      <h3 className="font-semibold mb-4">Badges & Rewards</h3>
+
+      <div className="flex justify-around text-center">
+        <div>
+          <Medal size={36} className="text-yellow-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Locked</p>
+        </div>
+
+        <div>
+          <Gem size={36} className="text-pink-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Locked</p>
+        </div>
+
+        <div>
+          <Star size={36} className="text-orange-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Locked</p>
+        </div>
+
+        <div>
+          <Coins size={36} className="text-yellow-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Locked</p>
+        </div>
+
+        <div>
+          <Trophy size={36} className="text-orange-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Locked</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 }

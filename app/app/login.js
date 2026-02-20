@@ -10,11 +10,11 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Users, GraduationCap } from 'lucide-react-native';
 import { useUser } from '../src/contexts/UserContext';
+import colors from '../src/styles/colors';
 
 export default function LoginScreen() {
   const { login, signup } = useUser();
@@ -54,61 +54,78 @@ export default function LoginScreen() {
   const classOptions = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 
   return (
-    <LinearGradient colors={['#2563EB', '#4338CA']} style={styles.container}>
+    <View style={styles.container}>
+      <Image
+        source={require('../assets/illustrations/symbols.png')}
+        style={styles.bgTop}
+        resizeMode="contain"
+      />
+      <Image
+        source={require('../assets/illustrations/symbols.png')}
+        style={styles.bgBottom}
+        resizeMode="contain"
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Portal Links at Top */}
-          <View style={styles.portalRow}>
-            <TouchableOpacity style={styles.portalLink} onPress={() => router.push('/parent/login')}>
-              <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.portalLinkGradient}>
-                <Users size={16} color="#FFF" />
-                <Text style={styles.portalLinkText}>Parent</Text>
-              </LinearGradient>
+          <Text style={styles.title}>{isSignup ? 'Join Masterly' : 'Login'}</Text>
+          <Text style={styles.subtitle}>{isSignup ? 'Start your learning journey' : 'Sign in to continue learning'}</Text>
+
+          <View style={styles.roleRow}>
+            <TouchableOpacity style={styles.roleItem} onPress={() => router.push('/parent/login')}>
+              <View style={styles.roleCircle}>
+                <Image source={require('../assets/illustrations/avatars/parent.png')} style={styles.roleAvatar} />
+              </View>
+              <Text style={[styles.roleLabel, styles.roleParent]}>PARENT</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.portalLink} onPress={() => router.push('/teacher/login')}>
-              <LinearGradient colors={['#059669', '#10B981']} style={styles.portalLinkGradient}>
-                <GraduationCap size={16} color="#FFF" />
-                <Text style={styles.portalLinkText}>Teacher</Text>
-              </LinearGradient>
+
+            <View style={styles.roleItem}>
+              <View style={[styles.roleCircle, styles.roleActive]}>
+                <Image source={require('../assets/illustrations/avatars/child.png')} style={styles.roleAvatar} />
+              </View>
+              <Text style={[styles.roleLabel, styles.roleChild]}>CHILD</Text>
+            </View>
+
+            <TouchableOpacity style={styles.roleItem} onPress={() => router.push('/teacher/login')}>
+              <View style={styles.roleCircle}>
+                <Image source={require('../assets/illustrations/avatars/teacher.png')} style={styles.roleAvatar} />
+              </View>
+              <Text style={[styles.roleLabel, styles.roleTeacher]}>TEACHER</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.emoji}>{isSignup ? '🎓' : '👋'}</Text>
-          <Text style={styles.title}>
-            {isSignup ? 'Join Math GPT!' : 'Welcome Back!'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isSignup ? 'Start your math journey' : 'Continue learning'}
-          </Text>
-
           <View style={styles.form}>
+            <Text style={styles.fieldLabel}>Please enter Username</Text>
             <TextInput
               style={styles.input}
               placeholder="Username"
-              placeholderTextColor="rgba(255,255,255,0.5)"
+              placeholderTextColor={colors.text.muted}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
             />
 
             {isSignup && (
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowClassPicker(true)}
-              >
-                <Text style={classLevel ? styles.inputText : styles.placeholder}>
-                  {classLevel ? `Class ${classLevel}` : 'Select class'}
-                </Text>
-              </TouchableOpacity>
+              <>
+                <Text style={styles.fieldLabel}>Select Class</Text>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowClassPicker(true)}
+                >
+                  <Text style={classLevel ? styles.inputText : styles.placeholder}>
+                    {classLevel ? `Class ${classLevel}` : 'Select class'}
+                  </Text>
+                </TouchableOpacity>
+              </>
             )}
 
+            <Text style={styles.fieldLabel}>Please enter Password</Text>
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="rgba(255,255,255,0.5)"
+              placeholderTextColor={colors.text.muted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -116,7 +133,7 @@ export default function LoginScreen() {
 
             {error ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>⚠️ {error}</Text>
+                <Text style={styles.errorText}>?? {error}</Text>
               </View>
             ) : null}
 
@@ -125,19 +142,29 @@ export default function LoginScreen() {
               onPress={handleSubmit}
               disabled={isLoading}
             >
-              <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.buttonGradient}>
-                <Text style={styles.buttonText}>
-                  {isLoading ? 'Please wait...' : isSignup ? 'Sign Up' : 'Login'}
-                </Text>
-              </LinearGradient>
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Processing...' : isSignup ? 'SIGN UP' : 'LOGIN'}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={() => { setIsSignup(!isSignup); setError(''); }}>
-            <Text style={styles.toggleText}>
-              {isSignup ? 'Already have an account? Login' : "New user? Sign up"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.toggleRow}>
+            {isSignup ? (
+              <>
+                <Text style={styles.toggleMuted}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => { setIsSignup(!isSignup); setError(''); }}>
+                  <Text style={styles.toggleAction}>Login</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.toggleMuted}>New user? </Text>
+                <TouchableOpacity onPress={() => { setIsSignup(!isSignup); setError(''); }}>
+                  <Text style={styles.toggleAction}>Sign Up</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -162,36 +189,44 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.primary.cream },
   keyboardView: { flex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20, alignItems: 'center' },
-  portalRow: { flexDirection: 'row', gap: 10, marginBottom: 24, width: '100%', maxWidth: 400 },
-  portalLink: { flex: 1, borderRadius: 12, overflow: 'hidden' },
-  portalLinkGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 6 },
-  portalLinkText: { color: '#FFF', fontWeight: '600', fontSize: 14 },
-  emoji: { fontSize: 60, marginBottom: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#FFF', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginBottom: 32 },
-  form: { width: '100%', maxWidth: 400, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: 24 },
-  input: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, padding: 14, color: '#FFF', fontSize: 16, marginBottom: 16, justifyContent: 'center' },
-  inputText: { color: '#FFF', fontSize: 16 },
-  placeholder: { color: 'rgba(255,255,255,0.5)', fontSize: 16 },
-  errorBox: { backgroundColor: 'rgba(239,68,68,0.2)', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: '#F87171', textAlign: 'center' },
-  button: { borderRadius: 12, overflow: 'hidden' },
+  scrollContent: { flexGrow: 1, justifyContent: 'flex-start', padding: 20, alignItems: 'center', paddingTop: 90 },
+  bgTop: { position: 'absolute', top: -80, left: -120, width: 320, height: 320, opacity: 0.5 },
+  bgBottom: { position: 'absolute', bottom: -140, right: -120, width: 380, height: 380, opacity: 0.5, transform: [{ rotate: '12deg' }] },
+  title: { fontSize: 32, fontWeight: '800', color: colors.text.primary, marginBottom: 6 },
+  subtitle: { fontSize: 13, color: colors.text.muted, marginBottom: 24 },
+  roleRow: { flexDirection: 'row', gap: 18, marginBottom: 22 },
+  roleItem: { alignItems: 'center' },
+  roleCircle: { width: 74, height: 74, borderRadius: 37, backgroundColor: '#F3B64E', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  roleActive: { borderWidth: 3, borderColor: colors.accent.orange },
+  roleAvatar: { width: 42, height: 42, resizeMode: 'contain' },
+  roleLabel: { marginTop: 6, fontSize: 11, fontWeight: '700' },
+  roleParent: { color: '#EF4444' },
+  roleChild: { color: colors.accent.orange },
+  roleTeacher: { color: colors.accent.blue },
+  form: { width: '100%', maxWidth: 360 },
+  fieldLabel: { width: '100%', maxWidth: 360, fontSize: 12, color: colors.text.muted, marginBottom: 6, marginTop: 6 },
+  input: { backgroundColor: colors.primary.creamLight, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 18, color: colors.text.primary, fontSize: 15, marginBottom: 12, borderWidth: 1, borderColor: colors.primary.border, justifyContent: 'center' },
+  inputText: { color: colors.text.primary, fontSize: 16 },
+  placeholder: { color: colors.text.muted, fontSize: 16 },
+  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#FCA5A5' },
+  errorText: { color: '#B91C1C', textAlign: 'center', fontSize: 12 },
+  button: { borderRadius: 999, overflow: 'hidden', backgroundColor: colors.accent.orange, paddingVertical: 14, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
   buttonDisabled: { opacity: 0.7 },
-  buttonGradient: { padding: 14, alignItems: 'center' },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  toggleText: { color: '#67E8F9', marginTop: 24 },
+  buttonText: { color: '#FFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.6 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
+  toggleMuted: { color: colors.text.muted, fontSize: 12 },
+  toggleAction: { color: colors.accent.orange, fontSize: 12, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1E1B4B', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginBottom: 16 },
-  modalItem: { padding: 14, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, marginBottom: 8 },
-  modalItemText: { color: '#FFF', fontSize: 16, textAlign: 'center' },
-  modalCancel: { color: '#67E8F9', textAlign: 'center', marginTop: 16, fontSize: 16 },
+  modalContent: { backgroundColor: colors.primary.creamLight, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%', borderWidth: 1, borderColor: colors.primary.border },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text.primary, textAlign: 'center', marginBottom: 16 },
+  modalItem: { padding: 14, backgroundColor: '#FFFFFF', borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.primary.border },
+  modalItemText: { color: colors.text.primary, fontSize: 16, textAlign: 'center' },
+  modalCancel: { color: colors.text.muted, textAlign: 'center', marginTop: 16, fontSize: 16 },
 });

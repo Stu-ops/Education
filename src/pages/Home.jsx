@@ -11,7 +11,7 @@ export default function Home() {
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialTopic, setInitialTopic] = useState(null);
-  const [showQuote, setShowQuote] = useState(true);
+  const [showQuote, setShowQuote] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const location = useLocation();
@@ -60,18 +60,13 @@ export default function Home() {
       )*/}
 
       <div
-        className="h-screen w-screen bg-gradient-to-b from-blue-600 to-indigo-700 p-2 flex justify-center items-center relative overflow-hidden"
+        className="min-h-screen w-screen bg-masterly-cream p-3 flex justify-center items-center"
         onClick={() => setIsChatExpanded(false)}
       >
-        {/* Ambient floating elements */}
-        <div className="absolute top-10 left-10 w-20 h-20 bg-white/5 rounded-full blur-xl animate-ambient-float"></div>
-        <div className="absolute bottom-20 right-20 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl animate-ambient-float animation-delay-1000"></div>
-        <div className="absolute top-1/3 right-10 w-16 h-16 bg-indigo-400/10 rounded-full blur-xl animate-ambient-float animation-delay-500"></div>
-
         <div
-          className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl h-full 
-                     bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl 
-                     p-4 flex flex-col relative z-10"
+          className="w-full max-w-[440px] h-[calc(100vh-24px)] max-h-[860px]
+                     bg-masterly-cream rounded-[28px] border border-masterly-border shadow-xl 
+                     p-4 flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           <Header />
@@ -79,7 +74,14 @@ export default function Home() {
 
           {/* Content area with proper overflow handling */}
           <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-            {!isChatExpanded && <FeatureGrid onTopicClick={handleTopicClick} />}
+            {!isChatExpanded && (
+              <>
+                <FeatureGrid onTopicClick={handleTopicClick} />
+                <div className="text-center text-masterly-muted text-sm sm:text-base font-medium py-2">
+                  See More
+                </div>
+              </>
+            )}
 
             <ChatSection
               setIsChatExpanded={setIsChatExpanded}

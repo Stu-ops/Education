@@ -28,7 +28,7 @@ export default function ExploreScreen() {
 
   if (!data) {
     return (
-      <LinearGradient colors={colors.gradients.main} style={styles.container}>
+      <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading...</Text>
@@ -42,7 +42,7 @@ export default function ExploreScreen() {
   const goalProgress = Math.min((weeklyGoal.solved / weeklyGoal.goal) * 100, 100);
 
   return (
-    <LinearGradient colors={colors.gradients.main} style={styles.container}>
+    <LinearGradient colors={['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea}>
         <ScrollView

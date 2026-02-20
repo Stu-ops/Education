@@ -1,12 +1,13 @@
 // Profile Screen
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Edit, Star, Save, X, Upload } from 'lucide-react-native';
+import { LogOut, Edit, Star, Save, X, Upload, GraduationCap } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useUser } from '../../src/contexts/UserContext';
+import colors from '../../src/styles/colors';
+import Header from '../../src/components/Header';
 
 export default function ProfileScreen() {
     const { user, logout, updateUser } = useUser();
@@ -14,6 +15,9 @@ export default function ProfileScreen() {
     const [form, setForm] = useState(null);
     const [saving, setSaving] = useState(false);
     const [showClassPicker, setShowClassPicker] = useState(false);
+    const [animatedPoints, setAnimatedPoints] = useState(0);
+    const [animatedLevel, setAnimatedLevel] = useState(0);
+    const hasAnimated = useRef(false);
 
     useEffect(() => {
         if (user) {
@@ -22,6 +26,29 @@ export default function ProfileScreen() {
                 classLevel: user.class_level || user.classLevel,
             });
         }
+    }, [user]);
+
+    useEffect(() => {
+        if (!user || hasAnimated.current) return;
+        const targetPoints = user.points || 250;
+        const targetLevel = user.level || 1;
+        const duration = 1200;
+        const steps = 60;
+        const pointsIncrement = targetPoints / steps;
+        const levelIncrement = targetLevel / steps;
+        let currentStep = 0;
+
+        const timer = setInterval(() => {
+            currentStep += 1;
+            setAnimatedPoints(Math.min(Math.round(pointsIncrement * currentStep), targetPoints));
+            setAnimatedLevel(Math.min(Math.round(levelIncrement * currentStep), targetLevel));
+            if (currentStep >= steps) {
+                clearInterval(timer);
+                hasAnimated.current = true;
+            }
+        }, duration / steps);
+
+        return () => clearInterval(timer);
     }, [user]);
 
     const handleLogout = async () => {
@@ -44,9 +71,9 @@ export default function ProfileScreen() {
 
         if (!result.canceled && result.assets[0]) {
             const asset = result.assets[0];
-            setForm(prev => ({ 
-                ...prev, 
-                avatar: `data:image/jpeg;base64,${asset.base64}` 
+            setForm(prev => ({
+                ...prev,
+                avatar: `data:image/jpeg;base64,${asset.base64}`
             }));
         }
     };
@@ -58,7 +85,6 @@ export default function ProfileScreen() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Convert "Class 5" format to "class_5" for backend
             let classLevelForBackend = form.classLevel;
             if (classLevelForBackend) {
                 const match = classLevelForBackend.match(/\d+/);
@@ -84,6 +110,7 @@ export default function ProfileScreen() {
                     ...updated,
                     classLevel: updated.class_level || updated.classLevel,
                 });
+                hasAnimated.current = false;
             }
         } catch (error) {
             console.error('Error updating user:', error);
@@ -102,15 +129,17 @@ export default function ProfileScreen() {
     };
 
     return (
-        <LinearGradient colors={['#2563EB', '#4338CA']} style={styles.container}>
+        <View style={styles.container}>
             <SafeAreaView style={styles.safeArea}>
+                <View style={styles.headerWrap}>
+                    <Header />
+                </View>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    {/* Avatar */}
                     <View style={styles.avatarSection}>
-                        <LinearGradient colors={['#A855F7', '#EC4899']} style={styles.avatarBorder}>
+                        <View style={styles.avatarBorder}>
                             <Image source={{ uri: form?.avatar || 'https://i.pravatar.cc/150' }} style={styles.avatar} />
-                        </LinearGradient>
-                        
+                        </View>
+
                         {editing && form?.avatar && (
                             <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
                                 <X size={16} color="#FFFFFF" />
@@ -119,27 +148,35 @@ export default function ProfileScreen() {
 
                         {editing && (
                             <TouchableOpacity style={styles.uploadButton} onPress={handleImageUpload}>
-                                <LinearGradient
-                                    colors={['#3B82F6', '#2563EB']}
-                                    style={styles.uploadButtonGradient}
-                                >
-                                    <Upload size={18} color="#FFFFFF" />
-                                    <Text style={styles.uploadButtonText}>Upload Photo</Text>
-                                </LinearGradient>
+                                <Upload size={18} color="#FFFFFF" />
+                                <Text style={styles.uploadButtonText}>Upload Photo</Text>
                             </TouchableOpacity>
                         )}
+
+                        <Text style={styles.userName}>{form?.name || user?.name || 'Student'}</Text>
+                        <Text style={styles.userInfo}>Level {form?.level || user?.level || 1}</Text>
+
+                        <View style={styles.actionRow}>
+                            {!editing ? (
+                                <TouchableOpacity style={[styles.actionButton, styles.actionBlue]} onPress={() => setEditing(true)}>
+                                    <Edit size={18} color="#FFFFFF" />
+                                    <Text style={styles.actionText}>Edit</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity style={[styles.actionButton, styles.actionGreen]} onPress={handleSave} disabled={saving}>
+                                    {saving ? <ActivityIndicator size="small" color="#FFF" /> : <Save size={18} color="#FFFFFF" />}
+                                    <Text style={styles.actionText}>{saving ? 'Saving...' : 'Save'}</Text>
+                                </TouchableOpacity>
+                            )}
+                            <TouchableOpacity style={[styles.actionButton, styles.actionRed]} onPress={handleLogout}>
+                                <LogOut size={18} color="#FFFFFF" />
+                                <Text style={styles.actionText}>Logout</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    {/* Profile Card */}
-                    <View style={styles.profileCard}>
-                        {!editing ? (
-                            <>
-                                <Text style={styles.userName}>{form?.name || user?.name || 'Student'}</Text>
-                                <Text style={styles.userInfo}>
-                                    {formatClassDisplay(form?.classLevel || user?.class_level || user?.classLevel)} · Level {form?.level || user?.level || 1}
-                                </Text>
-                            </>
-                        ) : (
+                    {editing && (
+                        <View style={styles.profileCard}>
                             <View style={styles.editForm}>
                                 <View style={styles.inputContainer}>
                                     <Text style={styles.inputLabel}>Name:</Text>
@@ -147,7 +184,7 @@ export default function ProfileScreen() {
                                         style={styles.input}
                                         value={form?.name || ''}
                                         onChangeText={(v) => handleChange('name', v)}
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        placeholderTextColor={colors.text.muted}
                                         placeholder="Enter your name"
                                     />
                                 </View>
@@ -169,7 +206,7 @@ export default function ProfileScreen() {
                                         value={String(form?.level || '')}
                                         onChangeText={(v) => handleChange('level', parseInt(v) || 0)}
                                         keyboardType="numeric"
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        placeholderTextColor={colors.text.muted}
                                     />
                                 </View>
 
@@ -180,7 +217,7 @@ export default function ProfileScreen() {
                                         value={form?.email || ''}
                                         onChangeText={(v) => handleChange('email', v)}
                                         keyboardType="email-address"
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        placeholderTextColor={colors.text.muted}
                                     />
                                 </View>
 
@@ -191,7 +228,7 @@ export default function ProfileScreen() {
                                         value={String(form?.age || '')}
                                         onChangeText={(v) => handleChange('age', parseInt(v) || null)}
                                         keyboardType="numeric"
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        placeholderTextColor={colors.text.muted}
                                     />
                                 </View>
 
@@ -201,75 +238,60 @@ export default function ProfileScreen() {
                                         style={styles.input}
                                         value={form?.school || ''}
                                         onChangeText={(v) => handleChange('school', v)}
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        placeholderTextColor={colors.text.muted}
                                     />
                                 </View>
                             </View>
-                        )}
-                    </View>
+                        </View>
+                    )}
 
-                    {/* Stats */}
                     <View style={styles.statsCard}>
                         <View style={styles.statsHeader}>
-                            <Star size={20} color="#EAB308" />
+                            <Star size={18} color={colors.accent.yellow} />
                             <Text style={styles.statsTitle}>Progress</Text>
                         </View>
-                        <View style={styles.statsGrid}>
-                            <LinearGradient colors={['rgba(168,85,247,0.2)', 'rgba(236,72,153,0.2)']} style={styles.statItem}>
-                                <Text style={styles.statValue}>{user?.points || 250}</Text>
-                                <Text style={styles.statLabel}>Points</Text>
-                            </LinearGradient>
-                            <LinearGradient colors={['rgba(59,130,246,0.2)', 'rgba(6,182,212,0.2)']} style={styles.statItem}>
-                                <Text style={styles.statValue}>{user?.level || 1}</Text>
-                                <Text style={styles.statLabel}>Level</Text>
-                            </LinearGradient>
+
+                        <View style={styles.progressRow}>
+                            <View style={[styles.progressChip, styles.progressChipOrange]}>
+                                <Text style={styles.progressValue}>{animatedPoints}</Text>
+                                <Text style={styles.progressLabel} numberOfLines={1}>Progress</Text>
+                            </View>
+                            <View style={[styles.progressChip, styles.progressChipBlue]}>
+                                <Text style={[styles.progressValue, { color: colors.accent.blue }]}>Level {animatedLevel}</Text>
+                                <Text style={styles.progressLabel} numberOfLines={1}>Current Level</Text>
+                            </View>
                         </View>
-                        <View style={styles.starsRow}>
-                            {[1, 2, 3, 4, 5].map(i => (
-                                <Star key={i} size={24} color={i <= (user?.rating || 3) ? '#EAB308' : '#6B7280'} fill={i <= (user?.rating || 3) ? '#EAB308' : 'transparent'} />
-                            ))}
+
+                        <View style={styles.ratingCard}>
+                            <View style={styles.starsRow}>
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <Star key={i} size={20} color={i <= (user?.rating || 3) ? colors.accent.yellow : colors.text.soft} fill={i <= (user?.rating || 3) ? colors.accent.yellow : 'transparent'} />
+                                ))}
+                            </View>
+                            <Text style={styles.ratingText}>Achievement Rating</Text>
                         </View>
                     </View>
 
-                    {/* Buttons */}
-                    <View style={styles.buttons}>
-                        {!editing ? (
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => setEditing(true)}
-                            >
-                                <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.buttonGradient}>
-                                    <Edit size={20} color="#FFF" />
-                                    <Text style={styles.buttonText}>Edit Profile</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={handleSave}
-                                disabled={saving}
-                            >
-                                <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.buttonGradient}>
-                                    {saving ? (
-                                        <ActivityIndicator size="small" color="#FFF" />
-                                    ) : (
-                                        <Save size={20} color="#FFF" />
-                                    )}
-                                    <Text style={styles.buttonText}>{saving ? 'Saving...' : 'Save'}</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity style={styles.button} onPress={handleLogout}>
-                            <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.buttonGradient}>
-                                <LogOut size={20} color="#FFF" />
-                                <Text style={styles.buttonText}>Logout</Text>
-                            </LinearGradient>
+                    <View style={styles.teachingCard}>
+                        <View style={styles.teachingContent}>
+                            <View style={styles.teachingIcon}>
+                                <GraduationCap size={20} color="#FFFFFF" />
+                            </View>
+                            <View style={styles.teachingText}>
+                                <Text style={styles.teachingTitle}>Teaching Hub</Text>
+                                <Text style={styles.teachingSubtitle}>Share your knowledge with us</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.teachingButton}
+                            onPress={() => router.push('/teacher/login')}
+                        >
+                            <Text style={styles.teachingButtonText}>Access</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </SafeAreaView>
 
-            {/* Class Picker Modal */}
             <Modal
                 visible={showClassPicker}
                 transparent
@@ -283,79 +305,84 @@ export default function ProfileScreen() {
                             {classOptions.map((c) => (
                                 <TouchableOpacity
                                     key={c}
-                                    style={[
-                                        styles.pickerItem,
-                                        form?.classLevel === c && styles.pickerItemSelected,
-                                    ]}
+                                    style={[styles.pickerItem, form?.classLevel === c && styles.pickerItemSelected]}
                                     onPress={() => {
                                         handleChange('classLevel', c);
                                         setShowClassPicker(false);
                                     }}
                                 >
-                                    <Text
-                                        style={[
-                                            styles.pickerItemText,
-                                            form?.classLevel === c && styles.pickerItemTextSelected,
-                                        ]}
-                                    >
+                                    <Text style={[styles.pickerItemText, form?.classLevel === c && styles.pickerItemTextSelected]}>
                                         {formatClassDisplay(c)}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
-                        <TouchableOpacity
-                            style={styles.modalClose}
-                            onPress={() => setShowClassPicker(false)}
-                        >
+                        <TouchableOpacity style={styles.modalClose} onPress={() => setShowClassPicker(false)}>
                             <Text style={styles.modalCloseText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
-        </LinearGradient>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: colors.primary.cream },
     safeArea: { flex: 1 },
     scrollContent: { padding: 16, alignItems: 'center', paddingBottom: 100 },
-    avatarSection: { marginBottom: 20, alignItems: 'center' },
-    avatarBorder: { width: 124, height: 124, borderRadius: 62, padding: 4 },
-    avatar: { width: '100%', height: '100%', borderRadius: 60, backgroundColor: '#374151' },
+    headerWrap: { width: '100%', paddingHorizontal: 12, paddingTop: 8, marginBottom: 6 },
+    avatarSection: { marginBottom: 16, alignItems: 'center' },
+    avatarBorder: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors.accent.orange, padding: 4, backgroundColor: '#FFF' },
+    avatar: { width: '100%', height: '100%', borderRadius: 56, backgroundColor: '#E5E7EB' },
     removeButton: { position: 'absolute', top: 0, right: 0, backgroundColor: '#EF4444', borderRadius: 16, padding: 8 },
-    uploadButton: { marginTop: 12, borderRadius: 12, overflow: 'hidden' },
-    uploadButtonGradient: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, gap: 8 },
-    uploadButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
-    profileCard: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, width: '100%', alignItems: 'center', marginBottom: 16 },
-    userName: { fontSize: 24, fontWeight: 'bold', color: '#FFF' },
-    userInfo: { fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-    editForm: { width: '100%', marginTop: 16 },
+    uploadButton: { marginTop: 12, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: colors.accent.blue, flexDirection: 'row', alignItems: 'center', gap: 6 },
+    uploadButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+    userName: { fontSize: 20, fontWeight: '700', color: colors.text.primary, marginTop: 10 },
+    userInfo: { fontSize: 13, color: colors.text.muted, marginTop: 2 },
+    actionRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999 },
+    actionBlue: { backgroundColor: colors.accent.blue },
+    actionGreen: { backgroundColor: colors.accent.green },
+    actionRed: { backgroundColor: '#EF4444' },
+    actionText: { color: '#FFF', fontWeight: '600', fontSize: 12 },
+    profileCard: { backgroundColor: '#FBF1EF', borderRadius: 18, padding: 16, width: '100%', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#F0DAD2' },
+    editForm: { width: '100%', marginTop: 8 },
     inputContainer: { marginBottom: 12 },
-    inputLabel: { fontSize: 14, color: '#FFF', marginBottom: 4, fontWeight: '500' },
-    input: { backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, color: '#1F2937', fontSize: 16 },
-    inputValue: { backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, justifyContent: 'center' },
-    inputValueText: { color: '#1F2937', fontSize: 16 },
-    statsCard: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 16, width: '100%', marginBottom: 16 },
-    statsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-    statsTitle: { fontSize: 18, fontWeight: '600', color: '#FFF' },
-    statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-    statItem: { flex: 1, borderRadius: 12, padding: 16, alignItems: 'center' },
-    statValue: { fontSize: 28, fontWeight: 'bold', color: '#FFF' },
-    statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-    starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
-    buttons: { flexDirection: 'row', gap: 12, width: '100%' },
-    button: { flex: 1, borderRadius: 12, overflow: 'hidden' },
-    buttonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
-    buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+    inputLabel: { fontSize: 13, color: colors.text.primary, marginBottom: 4, fontWeight: '500' },
+    input: { backgroundColor: '#FFFFFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, color: colors.text.primary, fontSize: 14, borderWidth: 1, borderColor: '#F0DAD2' },
+    inputValue: { backgroundColor: '#FFFFFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: '#F0DAD2' },
+    inputValueText: { color: colors.text.primary, fontSize: 14 },
+    statsCard: { backgroundColor: '#FBF1EF', borderRadius: 18, padding: 16, width: '100%', marginBottom: 16, borderWidth: 1, borderColor: '#F0DAD2' },
+    statsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+    statsTitle: { fontSize: 16, fontWeight: '600', color: colors.text.primary },
+    progressRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+    progressChip: { flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.primary.border },
+    progressChipOrange: { backgroundColor: '#FEE6DA' },
+    progressChipBlue: { backgroundColor: '#E7F5FE' },
+    progressValue: { fontSize: 20, fontWeight: '700', color: colors.accent.orange },
+    progressLabel: { fontSize: 10, color: colors.text.muted, marginTop: 2, textAlign: 'center' },
+    ratingCard: { backgroundColor: '#FEF9F1', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.primary.border },
+    statValue: { fontSize: 22, fontWeight: '700', color: colors.accent.orange },
+    statLabel: { fontSize: 12, color: colors.text.muted, marginTop: 2 },
+    starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 6 },
+    ratingText: { textAlign: 'center', fontSize: 12, color: colors.text.muted, marginTop: 6 },
+    teachingCard: { backgroundColor: '#FDFBFA', borderRadius: 18, padding: 14, width: '100%', borderWidth: 1, borderColor: '#F0DAD2', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+    teachingContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    teachingIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accent.orange, alignItems: 'center', justifyContent: 'center' },
+    teachingText: { flexShrink: 1 },
+    teachingTitle: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+    teachingSubtitle: { fontSize: 11, color: colors.text.muted, marginTop: 2 },
+    teachingButton: { backgroundColor: colors.accent.orange, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18 },
+    teachingButtonText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { backgroundColor: '#1E1B4B', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' },
-    modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginBottom: 16 },
+    modalContent: { backgroundColor: '#FBF1EF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%', borderWidth: 1, borderColor: '#F0DAD2' },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text.primary, textAlign: 'center', marginBottom: 16 },
     pickerScroll: { maxHeight: 300 },
-    pickerItem: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 10, marginBottom: 8, backgroundColor: 'rgba(255,255,255,0.1)' },
-    pickerItemSelected: { backgroundColor: '#3B82F6' },
-    pickerItemText: { color: '#FFF', fontSize: 16, textAlign: 'center' },
+    pickerItem: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 10, marginBottom: 8, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#F0DAD2' },
+    pickerItemSelected: { backgroundColor: '#FFE9D8' },
+    pickerItemText: { color: colors.text.primary, fontSize: 16, textAlign: 'center' },
     pickerItemTextSelected: { fontWeight: 'bold' },
     modalClose: { marginTop: 16, paddingVertical: 14, alignItems: 'center' },
-    modalCloseText: { color: '#67E8F9', fontSize: 16 },
+    modalCloseText: { color: colors.text.muted, fontSize: 16 },
 });

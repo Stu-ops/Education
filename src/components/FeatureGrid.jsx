@@ -29,20 +29,12 @@ export default function FeatureGrid({ onTopicClick }) {
 
   const icons = ["123", "+", "−", "⬤"];
   
-  // Colorful gradient backgrounds for each topic
-  const gradients = [
-    "from-purple-500 to-pink-500",
-    "from-blue-500 to-cyan-500",
-    "from-green-500 to-emerald-500",
-    "from-orange-500 to-yellow-500",
-  ];
-  
-  // Colored glow effects for hover
-  const glows = [
-    "shadow-glow-purple",
-    "shadow-glow-blue",
-    "shadow-glow-green",
-    "shadow-lg",
+  // Solid colors for topic badges
+  const badgeColors = [
+    "#F670B1",
+    "#3DA9D3",
+    "#31BC5F",
+    "#FD9D28",
   ];
 
   const features =
@@ -52,8 +44,7 @@ export default function FeatureGrid({ onTopicClick }) {
             ? ["संख्याएँ", "जोड़", "घटाव", "आकार"][i] || topic
             : topic,
           icon: icons[i] || "❖",
-          gradient: gradients[i] || "from-purple-500 to-pink-500",
-          glow: glows[i] || "shadow-glow-purple",
+          badge: badgeColors[i] || "#FF7A1A",
         }))
       : [];
 
@@ -104,19 +95,20 @@ export default function FeatureGrid({ onTopicClick }) {
   return (
     <div className="space-y-4 w-full">
       {/* Browse Teachers */}
-      <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-green-300/30">
+      <div className="bg-masterly-creamLight rounded-2xl p-3 border border-masterly-border shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold text-sm sm:text-base lg:text-lg">
+            <h3 className="text-masterly-navy font-semibold text-sm">
               {lang === "hi" ? "शिक्षक खोजें" : "Browse Teachers"}
             </h3>
-            <p className="text-white/70 text-xs sm:text-sm">
+            <p className="text-masterly-muted text-xs">
               {lang === "hi" ? "वीडियो लेक्चर देखें और सीखें" : "Watch video lectures and learn"}
             </p>
           </div>
           <button
             onClick={() => navigate('/find-teachers')}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200 text-xs sm:text-sm flex-shrink-0"
+            className="bg-masterly-green text-white px-4 py-1.5 rounded-full font-semibold transition-all duration-200 text-xs flex-shrink-0 hover:brightness-110 shadow-sm border border-black/5"
+            style={{ backgroundColor: "#27B74A" }}
           >
             {lang === "hi" ? "खोजें" : "Browse"}
           </button>
@@ -124,19 +116,20 @@ export default function FeatureGrid({ onTopicClick }) {
       </div>
 
       {/* My Teachers */}
-      <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-orange-300/30">
+      <div className="bg-masterly-creamLight rounded-2xl p-3 border border-masterly-border shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold text-sm sm:text-base lg:text-lg">
+            <h3 className="text-masterly-navy font-semibold text-sm">
               {lang === "hi" ? "मेरे शिक्षक" : "My Teachers"}
             </h3>
-            <p className="text-white/70 text-xs sm:text-sm">
+            <p className="text-masterly-muted text-xs">
               {lang === "hi" ? "आपके नामांकित शिक्षकों की सामग्री देखें" : "Access content from your enrolled teachers"}
             </p>
           </div>
           <button
             onClick={() => navigate('/my-teachers')}
-            className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-xs sm:text-sm flex-shrink-0"
+            className="bg-masterly-orangeDeep text-white px-4 py-1.5 rounded-full font-semibold transition-all duration-200 text-xs flex-shrink-0 hover:brightness-110 shadow-sm border border-black/5"
+            style={{ backgroundColor: "#FC6F1F" }}
           >
             {lang === "hi" ? "देखें" : "View"}
           </button>
@@ -144,26 +137,25 @@ export default function FeatureGrid({ onTopicClick }) {
       </div>
 
       {/* Math Topics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+      <div className="grid grid-cols-4 gap-2">
         {features.map((f, i) => (
           <button
             key={i}
             className={`
               group relative
-              bg-white/10 backdrop-blur-md 
-              rounded-xl sm:rounded-2xl
+              bg-masterly-creamLight 
+              rounded-2xl
               flex flex-col items-center justify-center 
-              p-3 sm:p-4 md:p-6
-              min-h-[100px] sm:min-h-[120px] md:min-h-[140px]
-              text-white font-medium
-              border-2 border-white/20
-              shadow-lg
+              p-2
+              min-h-[88px]
+              text-masterly-navy font-medium
+              border border-masterly-border
+              shadow-sm
               transition-all duration-300 ease-out
-              hover:scale-105 hover:shadow-2xl hover:${f.glow}
+              hover:scale-105 hover:shadow-md
               active:scale-95
               animate-fade-in
               gpu-accelerated
-              ${i === 3 ? 'hidden md:flex' : ''}
             `}
             style={{
               animationDelay: `${i * 100}ms`,
@@ -172,25 +164,27 @@ export default function FeatureGrid({ onTopicClick }) {
             onClick={() => onTopicClick(f.label)}
             aria-label={`${lang === "hi" ? "विषय चुनें" : "Select topic"}: ${f.label}`}
           >
-            {/* Gradient icon background */}
-            <div className={`
-              w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20
-              rounded-full 
-              bg-gradient-to-br ${f.gradient}
-              flex items-center justify-center
-              mb-2 sm:mb-3
-              text-lg sm:text-2xl md:text-3xl
-              transition-transform duration-300
-              group-hover:scale-110
-              group-active:scale-90
-              gpu-accelerated
-            `}
-            aria-hidden="true">
+            {/* Solid icon badge */}
+            <div
+              className={`
+                w-11 h-11
+                rounded-full 
+                flex items-center justify-center
+                mb-2
+                text-lg text-white
+                transition-transform duration-300
+                group-hover:scale-110
+                group-active:scale-90
+                gpu-accelerated
+              `}
+              style={{ backgroundColor: f.badge }}
+              aria-hidden="true"
+            >
               {f.icon}
             </div>
             
             {/* Topic label */}
-            <div className="text-xs sm:text-sm md:text-base text-center leading-tight">
+            <div className="text-[11px] text-center leading-tight">
               {f.label}
             </div>
           </button>

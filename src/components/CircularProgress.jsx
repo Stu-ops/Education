@@ -39,12 +39,11 @@ export default function CircularProgress({ percentage, size = "mobile" }) {
       className="relative mx-auto"
       style={{ width: `${dimensions}px`, height: `${dimensions}px` }}
     >
-      {/* Glow effect around circle */}
       <div 
-        className="absolute inset-0 rounded-full animate-pulse-glow"
+        className="absolute inset-0 rounded-full"
         style={{
-          background: "radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, rgba(59, 130, 246, 0.3) 50%, transparent 70%)",
-          filter: "blur(20px)"
+          background: "radial-gradient(circle, rgba(248, 115, 22, 0.14) 0%, transparent 70%)",
+          filter: "blur(16px)"
         }}
       />
       
@@ -56,8 +55,8 @@ export default function CircularProgress({ percentage, size = "mobile" }) {
         <defs>
           {/* Gradient stroke from green-400 to blue-500 */}
           <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4ade80" /> {/* green-400 */}
-            <stop offset="100%" stopColor="#3b82f6" /> {/* blue-500 */}
+            <stop offset="0%" stopColor="#F4BE87" />
+            <stop offset="100%" stopColor="#F87316" />
           </linearGradient>
         </defs>
         
@@ -66,7 +65,7 @@ export default function CircularProgress({ percentage, size = "mobile" }) {
           cx={dimensions / 2}
           cy={dimensions / 2}
           r={radius}
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke="#EEDACE"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -84,7 +83,7 @@ export default function CircularProgress({ percentage, size = "mobile" }) {
           strokeLinecap="round"
           style={{
             transition: mounted ? "stroke-dashoffset 1s ease-out" : "none",
-            filter: "drop-shadow(0 0 8px rgba(74, 222, 128, 0.6))"
+            filter: "drop-shadow(0 0 6px rgba(248, 115, 22, 0.35))"
           }}
         />
       </svg>
@@ -92,12 +91,9 @@ export default function CircularProgress({ percentage, size = "mobile" }) {
       {/* Center percentage text with count-up animation */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span 
-          className={`font-bold text-white ${
+          className={`font-bold text-masterly-navy ${
             size === "desktop" ? "text-3xl" : "text-2xl"
           }`}
-          style={{
-            textShadow: "0 2px 10px rgba(0, 0, 0, 0.3)"
-          }}
         >
           {animatedPercentage}%
         </span>

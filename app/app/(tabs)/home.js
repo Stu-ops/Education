@@ -1,10 +1,11 @@
 // Home Screen
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableWithoutFeedback, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, StatusBar, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { BACKEND_URL } from '../../src/utils/api';
 import storage from '../../src/utils/storage';
+import colors from '../../src/styles/colors';
 
 import Header from '../../src/components/Header';
 import ProgressBar from '../../src/components/ProgressBar';
@@ -19,14 +20,70 @@ export default function HomeScreen() {
   const [initialTopic, setInitialTopic] = useState(null);
   const [showQuote, setShowQuote] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [loadedMessages, setLoadedMessages] = useState(null);
 
   // Parse messages from params if they exist
-  const preloadMessages = params?.messages ? JSON.parse(params.messages) : null;
+  const safeParseMessages = (raw) => {
+    if (!raw) return null;
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const list = Array.isArray(parsed) ? parsed : parsed?.messages;
+      if (!Array.isArray(list)) return null;
+      return list.map((m) => {
+        const text =
+          m?.text ??
+          m?.message ??
+          m?.content ??
+          m?.bot_message ??
+          '';
+        const image =
+          m?.image ??
+          m?.image_url ??
+          m?.imageUrl ??
+          null;
+        const senderRaw =
+          m?.sender ??
+          m?.role ??
+          m?.sender_type ??
+          (m?.is_bot ? 'bot' : null);
+        const sender =
+          senderRaw === 'assistant' || senderRaw === 'bot' || senderRaw === 'ai'
+            ? 'bot'
+            : senderRaw === 'user' || senderRaw === 'student'
+            ? 'user'
+            : m?.is_bot
+            ? 'bot'
+            : 'user';
+        return { text: String(text || ''), image, sender };
+      }).filter((m) => m.text || m.image);
+    } catch {
+      return null;
+    }
+  };
+
+  const preloadMessages = safeParseMessages(params?.messages);
   const preloadSessionId = params?.session_id || null;
 
   useEffect(() => {
     checkFirstLoad();
   }, []);
+
+  useEffect(() => {
+    const loadSessionMessages = async () => {
+      if (!preloadSessionId) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/chat/session/${preloadSessionId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const normalized = safeParseMessages(data);
+        if (normalized?.length) setLoadedMessages(normalized);
+      } catch (err) {
+        console.error('Failed to load session messages:', err);
+      }
+    };
+
+    loadSessionMessages();
+  }, [preloadSessionId]);
 
   const checkFirstLoad = async () => {
     const hasShownQuote = await storage.getItem('hasShownQuote');
@@ -53,8 +110,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient colors={['#2563EB', '#4338CA']} style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       
       {/* Motivational Quote Overlay */}
       {showQuote && isFirstLoad && (
@@ -62,15 +119,23 @@ export default function HomeScreen() {
       )}
 
       <SafeAreaView style={styles.safeArea}>
-        <TouchableWithoutFeedback onPress={() => setIsChatExpanded(false)}>
+        <View style={styles.headerWrap}>
+          <Header onReset={handleReset} />
+        </View>
+        <TouchableWithoutFeedback
+          onPress={() => setIsChatExpanded(false)}
+          disabled={isChatExpanded}
+        >
           <View style={styles.content}>
             <View style={styles.card}>
-              <Header onReset={handleReset} />
               <ProgressBar loading={loading} />
 
               <View style={styles.mainContent}>
                 {!isChatExpanded && (
-                  <FeatureGrid onTopicClick={handleTopicClick} />
+                  <>
+                    <FeatureGrid onTopicClick={handleTopicClick} />
+                    <Text style={styles.seeMore}>See More</Text>
+                  </>
                 )}
 
                 <ChatSection
@@ -78,7 +143,7 @@ export default function HomeScreen() {
                   isChatExpanded={isChatExpanded}
                   setLoading={setLoading}
                   loading={loading}
-                  loadMessages={preloadMessages}
+                  loadMessages={loadedMessages || preloadMessages}
                   preloadSessionId={preloadSessionId}
                   initialTopic={initialTopic}
                 />
@@ -86,15 +151,39 @@ export default function HomeScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+        {isChatExpanded && (
+          <Pressable style={styles.overlay} onPress={() => setIsChatExpanded(false)} />
+        )}
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.primary.cream },
   safeArea: { flex: 1 },
-  content: { flex: 1, padding: 8, paddingBottom: 80 },
-  card: { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: 12 },
-  mainContent: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 12, paddingTop: 6, paddingBottom: 78 },
+  card: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 0,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  mainContent: { flex: 1, minHeight: 0, position: 'relative', paddingBottom: 8 },
+  seeMore: { textAlign: 'center', color: colors.text.muted, fontSize: 12, marginTop: 4, marginBottom: 6, fontWeight: '600', letterSpacing: 0.2 },
+  headerWrap: { paddingHorizontal: 12, paddingTop: 8, marginBottom: 6 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+    zIndex: 900,
+  },
 });
