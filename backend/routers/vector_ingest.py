@@ -1,14 +1,28 @@
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from vector_ingest_service import ingest_zip, load_registry
+BASE_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = BASE_DIR.parent
+
+# Ensure imports work whether run as a package, via uvicorn, or directly as a script.
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+try:
+    # When running as a package (uvicorn backend.main:app)
+    from backend.vector_ingest_service import ingest_zip, load_registry
+except ModuleNotFoundError:
+    # When running from backend directory or direct script execution
+    from vector_ingest_service import ingest_zip, load_registry
 
 router = APIRouter(prefix="/vector-ingest", tags=["Vector Ingestion"])
-BASE_DIR = Path(__file__).resolve().parents[1]
 LOCAL_HTML = BASE_DIR / "vector_ingest_local.html"
 
 

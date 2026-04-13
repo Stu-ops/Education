@@ -4,7 +4,7 @@ import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from vector_ingest_service import ingest_zip
+from backend.vector_ingest_service import ingest_zip
 
 BASE_DIR = Path(__file__).resolve().parent
 HTML_FILE = BASE_DIR / "vector_ingest_local.html"

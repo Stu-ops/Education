@@ -1,4 +1,131 @@
 {
-  "records": [],
-  "updated_at": null
+  "records": [
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo101.pdf",
+      "file_hash": "039bad8cf195a93b90fa7857eda95f39bdd4fd278b3c8bced235f3b6cd71c25c",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T11:52:43.082825"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo102.pdf",
+      "file_hash": "af54d04d912114053befb30adf8e56580fe9ddb49c461160dba150a0d19a07a8",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T11:59:06.185623"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo103.pdf",
+      "file_hash": "ef03cc524d286eb3ffc225a00422ce28f3fe18ab8e622424f0b1c748b45bf9f3",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T11:59:07.752902"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo104.pdf",
+      "file_hash": "d5f14fc2248860c029ab10aec2687165ed84d54917c10cd44057574f1c4bb456",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:01:35.722812"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo105.pdf",
+      "file_hash": "21d77cdaf37c11b26956bbdae0b9eff9700d723135ac55c1a2141b1caee8f017",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:01:54.649901"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo106.pdf",
+      "file_hash": "d2a181994b3d2a060226f4bf1b45ad581c6da69a8dd2a01e448704d6ce868071",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:02:14.853014"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo107.pdf",
+      "file_hash": "afb1c7c2f7699e0572e09e9ee3279f4e61100ba0b117b3f34b9d1ac10bdeae75",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:02:20.864361"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo108.pdf",
+      "file_hash": "e96d234eab38ed70616c77101aedeaf4efa7d92ea8aececeb046d383061f63b7",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:04.424127"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo109.pdf",
+      "file_hash": "c30b908dca8e7166e9830ca48c376a4f0b21d63a8e05bf601a150da031c13122",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:16.199372"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo110.pdf",
+      "file_hash": "4da2923c699b97a1930ae6b1072bf75fb5b0429d724ead7ba06510f98730b826",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:16.340947"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo111.pdf",
+      "file_hash": "5b483a3ee69f88ae67b43daa8095e5e5ba6278bb1f288fb1cdcd3b02f461276f",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:16.621534"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo112.pdf",
+      "file_hash": "6d73b01f7ad5492d08a67b695ae8c05230631f20b1b40c791ab7435b39d0e59e",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:28.160823"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo113.pdf",
+      "file_hash": "d4587f07dd122d19493a66fb2aae6f11ae02ef9124dea92634b524f078f20faa",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:38.223353"
+    },
+    {
+      "class_number": "12",
+      "subject": "biology",
+      "source_pdf": "lebo1ps.pdf",
+      "file_hash": "22804a9f4df81466593bf0fec0ff9f521b12a55887e32fb46340e528728ac771",
+      "zip_file": "lebo1dd.zip",
+      "status": "ingested",
+      "ingested_at": "2026-04-13T12:03:39.003524"
+    }
+  ],
+  "updated_at": "2026-04-13T12:03:55.504452"
 }

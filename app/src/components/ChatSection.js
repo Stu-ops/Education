@@ -141,8 +141,8 @@ export default function ChatSection({
     loadMessages || [
       {
         text: lang === 'hi'
-          ? 'नमस्ते! मैं आपके गणित के सवालों में मदद कर सकता हूँ।'
-          : 'Hello! I can help with your math questions.',
+          ? 'नमस्ते! मैं आपके सवालों में मदद कर सकता हूँ।'
+          : 'Hello! I can help with your  questions.',
         sender: 'bot',
       },
     ]
@@ -309,7 +309,7 @@ export default function ChatSection({
     <View style={styles.inner}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>
-        {lang === 'hi' ? 'गणित शिक्षक' : 'Math Teacher'}
+        {lang === 'hi' ? 'शिक्षक' : ' Teacher'}
         </Text>
         {isChatExpanded && (
           <TouchableOpacity style={styles.homeChip} onPress={() => setIsChatExpanded(false)}>
