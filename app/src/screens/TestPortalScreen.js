@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trophy, Clock3, RefreshCcw, Send, Medal } from 'lucide-react-native';
 
@@ -20,6 +19,7 @@ import {
   submitContestAnswers,
 } from '../utils/contestApi';
 import colors from '../styles/colors';
+import Header from '../components/Header';
 
 const QUESTION_COUNT = 5;
 
@@ -181,26 +181,32 @@ export default function TestPortalScreen() {
 
   if (userLoading || loading) {
     return (
-      <LinearGradient colors={colors.gradients?.main || ['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerWrap}>
+            <Header />
+          </View>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
+            <ActivityIndicator size="large" color={colors.accent.orange} />
             <Text style={styles.loadingText}>Loading test portal...</Text>
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   if (!user) {
     return (
-      <LinearGradient colors={colors.gradients?.main || ['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerWrap}>
+            <Header />
+          </View>
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Please sign in to take tests.</Text>
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -211,9 +217,12 @@ export default function TestPortalScreen() {
   const classLabel = formatClassLabel(contest?.class_level || user.class_level || user.level);
 
   return (
-    <LinearGradient colors={colors.gradients?.main || ['#6366F1', '#8B5CF6', '#A855F7']} style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
+        <View style={styles.headerWrap}>
+          <Header />
+        </View>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -221,7 +230,7 @@ export default function TestPortalScreen() {
           <View style={styles.heroCard}>
             <View style={styles.heroHeader}>
               <View style={styles.heroIcon}>
-                <Trophy size={22} color="#FFFFFF" />
+                <Trophy size={20} color={colors.text.white} />
               </View>
               <View>
                 <Text style={styles.heroTitle}>Test Portal</Text>
@@ -234,7 +243,7 @@ export default function TestPortalScreen() {
               </View>
               {isTestStarted && (
                 <View style={styles.metaBadge}>
-                  <Clock3 size={14} color="#F97316" />
+                  <Clock3 size={14} color={colors.accent.orange} />
                   <Text style={styles.metaText}>{formatTime(elapsedSeconds)}</Text>
                 </View>
               )}
@@ -412,106 +421,121 @@ export default function TestPortalScreen() {
             </View>
           )}
 
-          <View style={{ height: 80 }} />
+          <View style={{ height: 90 }} />
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  scrollContent: { padding: 12 },
+  container: { flex: 1, backgroundColor: '#EFE6E2' },
+  safeArea: { flex: 1, paddingBottom: 84 },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  headerWrap: { paddingHorizontal: 12, paddingTop: 8, marginBottom: 6 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { color: '#FFFFFF', marginTop: 8 },
+  loadingText: { color: '#6E6A67', marginTop: 8 },
   heroCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#F3ECE8',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
   heroHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   heroIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(249,115,22,0.9)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.accent.orange,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
-  heroSubtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 2 },
+  heroTitle: { color: colors.text.primary, fontSize: 18, fontWeight: '700' },
+  heroSubtitle: { color: colors.text.muted, fontSize: 12, marginTop: 2 },
   heroMeta: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
   metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: '#FBECE8',
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#F0DAD2',
   },
-  metaText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  metaText: { color: colors.text.primary, fontSize: 12, fontWeight: '600' },
   errorCard: {
-    backgroundColor: 'rgba(239,68,68,0.2)',
-    borderRadius: 14,
+    backgroundColor: '#FBE9E9',
+    borderRadius: 16,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#F3C5C5',
   },
-  errorText: { color: '#FEE2E2', fontSize: 12 },
+  errorText: { color: '#B4534C', fontSize: 12 },
   rankCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
+    backgroundColor: '#F3ECE8',
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
   rankHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   rankIcon: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(249,115,22,0.2)',
+    backgroundColor: '#FBECE8',
+    borderWidth: 1,
+    borderColor: '#F0DAD2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  rankSubtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
+  rankTitle: { color: colors.text.primary, fontSize: 16, fontWeight: '700' },
+  rankSubtitle: { color: colors.text.muted, fontSize: 11, marginTop: 2 },
   refreshButton: {
     marginLeft: 'auto',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: colors.accent.orange,
     borderRadius: 12,
     padding: 8,
   },
   rankGrid: { flexDirection: 'row', gap: 10, marginTop: 12 },
   rankTile: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: '#FBECE8',
     borderRadius: 14,
     padding: 10,
+    borderWidth: 1,
+    borderColor: '#F0DAD2',
   },
-  rankLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
-  rankValue: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', marginTop: 4 },
+  rankLabel: { color: colors.text.muted, fontSize: 11 },
+  rankValue: { color: colors.text.primary, fontSize: 16, fontWeight: '700', marginTop: 4 },
   leaderboardCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
+    backgroundColor: '#F3ECE8',
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
   leaderboardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  sectionTitle: { color: colors.text.primary, fontSize: 16, fontWeight: '700' },
   leaderboardRefresh: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  leaderboardRefreshText: { color: '#FFFFFF', fontSize: 11 },
+  leaderboardRefreshText: { color: colors.text.primary, fontSize: 11 },
   leaderboardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: '#E6D8D2',
   },
   leaderboardRowActive: {
-    backgroundColor: 'rgba(249,115,22,0.15)',
+    backgroundColor: '#FBECE8',
     borderRadius: 12,
     paddingHorizontal: 8,
   },
@@ -520,52 +544,55 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#F1D5C7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBadgeText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  rankBadgeText: { color: '#D98A5E', fontWeight: '700', fontSize: 12 },
   leaderboardNameWrap: { flex: 1 },
-  leaderboardName: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
-  leaderboardClass: { color: 'rgba(255,255,255,0.6)', fontSize: 10, marginTop: 2 },
-  leaderboardScore: { color: '#FFFFFF', fontWeight: '700' },
+  leaderboardName: { color: colors.text.primary, fontSize: 13, fontWeight: '600' },
+  leaderboardClass: { color: colors.text.muted, fontSize: 10, marginTop: 2 },
+  leaderboardScore: { color: colors.text.primary, fontWeight: '700' },
   emptyCard: {
     paddingVertical: 16,
     alignItems: 'center',
   },
-  emptyText: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
+  emptyText: { color: colors.text.muted, fontSize: 12 },
   startButton: {
-    backgroundColor: '#F97316',
+    backgroundColor: colors.accent.orange,
     borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 12,
   },
-  startButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  startButtonText: { color: colors.text.white, fontSize: 15, fontWeight: '700' },
   questionsCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
+    backgroundColor: '#F3ECE8',
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
   questionsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  questionsMeta: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
+  questionsMeta: { color: colors.text.muted, fontSize: 11 },
   questionBlock: { marginBottom: 16 },
-  questionLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, textTransform: 'uppercase' },
-  questionText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600', marginTop: 6 },
+  questionLabel: { color: colors.text.muted, fontSize: 11, textTransform: 'uppercase' },
+  questionText: { color: colors.text.primary, fontSize: 14, fontWeight: '600', marginTop: 6 },
   optionsList: { marginTop: 10, gap: 8 },
   optionButton: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
+    borderColor: '#E7D6CF',
     padding: 12,
+    backgroundColor: '#FFF8F4',
   },
   optionButtonActive: {
-    backgroundColor: 'rgba(249,115,22,0.2)',
-    borderColor: 'rgba(249,115,22,0.6)',
+    backgroundColor: '#FBECE8',
+    borderColor: '#F0BFA7',
   },
-  optionText: { color: '#FFFFFF', fontSize: 13 },
-  optionTextActive: { color: '#FFFFFF', fontWeight: '700' },
+  optionText: { color: colors.text.primary, fontSize: 13 },
+  optionTextActive: { color: colors.text.primary, fontWeight: '700' },
   actionRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   secondaryButton: {
     flex: 1,
@@ -573,36 +600,42 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: '#F3ECE8',
     borderRadius: 14,
     paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
-  secondaryButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  secondaryButtonText: { color: colors.text.primary, fontSize: 13, fontWeight: '700' },
   primaryButton: {
     flex: 1,
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F97316',
+    backgroundColor: colors.accent.orange,
     borderRadius: 14,
     paddingVertical: 12,
   },
-  primaryButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  primaryButtonText: { color: colors.text.white, fontSize: 13, fontWeight: '700' },
   buttonDisabled: { opacity: 0.6 },
   resultCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
+    backgroundColor: '#F3ECE8',
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E7D6CF',
   },
   resultRow: { flexDirection: 'row', gap: 10, marginTop: 12, marginBottom: 12 },
   resultTile: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: '#FBECE8',
     borderRadius: 12,
     padding: 10,
+    borderWidth: 1,
+    borderColor: '#F0DAD2',
   },
-  resultLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
-  resultValue: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginTop: 4 },
+  resultLabel: { color: colors.text.muted, fontSize: 11 },
+  resultValue: { color: colors.text.primary, fontSize: 15, fontWeight: '700', marginTop: 4 },
 });
