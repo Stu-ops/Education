@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getTopics } from '../utils/exploreApi'
 
-;
 import colors from '../styles/colors';
 
 export default function FeatureGrid({ onTopicClick }) {
