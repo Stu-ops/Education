@@ -6,6 +6,8 @@ import { LanguageProvider } from '../src/contexts/LanguageContext';
 import { HistoryProvider } from '../src/contexts/HistoryContext';
 import { ParentProvider } from '../src/contexts/ParentContext';
 import { TeacherProvider } from '../src/contexts/TeacherContext';
+import { PrincipalProvider } from '../src/contexts/PrincipalContext';
+import { AdminProvider } from '../src/contexts/AdminContext';
 
 export default function RootLayout() {
   return (
@@ -14,14 +16,20 @@ export default function RootLayout() {
         <HistoryProvider>
           <ParentProvider>
             <TeacherProvider>
-              <StatusBar style="light" />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="parent" />
-                <Stack.Screen name="teacher" />
-              </Stack>
+              <PrincipalProvider>
+                <AdminProvider>
+                  <StatusBar style="light" />
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="login" />
+                    <Stack.Screen name="parent" />
+                    <Stack.Screen name="teacher" />
+                    <Stack.Screen name="principal" />
+                    <Stack.Screen name="admin" />
+                  </Stack>
+                </AdminProvider>
+              </PrincipalProvider>
             </TeacherProvider>
           </ParentProvider>
         </HistoryProvider>

@@ -27,6 +27,7 @@ export const colors = {
     orange: ['#F97316', '#F25C05'],
     green: ['#38BA57', '#2AA24C'],
     blue: ['#3EAFD0', '#2D9BC1'],
+    main: ['#1E3A5F', '#2563EB'],   // student screens gradient
   },
 };
 

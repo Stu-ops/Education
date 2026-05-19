@@ -2,17 +2,16 @@
 import jwt
 import os
 import logging
+import bcrypt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 from typing import Optional
-from passlib.context import CryptContext
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# JWT Settings - Use environment variable with secure fallback
+# JWT Settings
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production-use-env-variable-instead")
 if SECRET_KEY == "your-secret-key-change-this-in-production-use-env-variable-instead":
     logger.warning("Using default SECRET_KEY! Set SECRET_KEY environment variable for production.")
@@ -20,26 +19,33 @@ if SECRET_KEY == "your-secret-key-change-this-in-production-use-env-variable-ins
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# OAuth2 Password Bearer - works with FastAPI docs and all authentication
+# OAuth2 Password Bearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
-# Password hashing utilities
+
+# ── Password hashing (direct bcrypt, no passlib) ──────────────────────────────
+
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
-    return pwd_context.hash(password)
+    """Hash a password using bcrypt. Truncates to 72 bytes (bcrypt limit)."""
+    password_bytes = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a plain password against a bcrypt hash."""
+    try:
+        password_bytes = plain_password.encode("utf-8")[:72]
+        return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
 # Create JWT
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None, role: str | None = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
+    if role:
+        to_encode["role"] = role
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 # Verify JWT token
@@ -75,17 +81,44 @@ def verify_token(token: str = Depends(oauth2_scheme)) -> str:
 
 # Optional token verification (returns None if no token)
 def verify_token_optional(token: str = Depends(oauth2_scheme)) -> Optional[str]:
-    """Optional token verification - returns username or None.
-    
-    Use this for endpoints that work with or without authentication.
-    """
+    """Optional token verification - returns username or None."""
     if not token:
         return None
-    
     try:
         return verify_token(token)
     except HTTPException:
         return None
+
+
+def decode_token_payload(token: str) -> dict:
+    """Decode token and return full payload dict. Raises 401 on failure."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if not payload.get("sub"):
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def require_role(role: str):
+    """Dependency factory — validates JWT and asserts the role claim.
+
+    Usage:
+        principal_required = require_role("principal")
+
+        @router.get("/me")
+        def me(payload: dict = Depends(principal_required)):
+            username = payload["sub"]
+    """
+    def dependency(token: str = Depends(oauth2_scheme)) -> dict:
+        payload = decode_token_payload(token)
+        if payload.get("role") != role:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        return payload
+    return dependency
 
 
 

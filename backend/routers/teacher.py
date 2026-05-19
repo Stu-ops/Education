@@ -7,7 +7,7 @@ from models.schemas import (
     VideoCreate, VideoOut, VideoDetail, TeacherWithVideos,
     TeacherStudentCreate, TeacherStudentOut, StudentInfo, TeacherWithStudents
 )
-from models.models import Teacher, Video, TeacherStudent, User
+from models.models import Teacher, Video, TeacherStudent, User, College
 from helper import get_db
 from auth import create_access_token, verify_token, hash_password, verify_password
 from datetime import timedelta, datetime
@@ -153,20 +153,35 @@ def register_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
     if existing_teacher:
         raise HTTPException(status_code=400, detail="Username already exists")
 
+    # Resolve college via invite code if provided
+    college_id = None
+    joined_at = None
+    if teacher.invite_code:
+        college = db.query(College).filter(College.invite_code == teacher.invite_code).first()
+        if not college:
+            raise HTTPException(status_code=400, detail="Invalid or expired invite code")
+        if not college.is_active:
+            raise HTTPException(status_code=400, detail="College is no longer active")
+        college_id = college.id
+        joined_at = datetime.utcnow().isoformat()
+
     new_teacher = Teacher(
         username=teacher.username,
-        password=hash_password(teacher.password),  # Hash password for security
+        password=hash_password(teacher.password),
         name=teacher.name or teacher.username,
         email=teacher.email,
         phone_number=teacher.phone_number,
         bio=teacher.bio,
         avatar=teacher.avatar,
+        college_id=college_id,
+        is_active=True,
+        joined_at=joined_at,
     )
 
     db.add(new_teacher)
     db.commit()
     db.refresh(new_teacher)
-    logger.info(f"New teacher registered: {teacher.username}")
+    logger.info(f"New teacher registered: {teacher.username}, college_id={college_id}")
     return new_teacher
 
 
@@ -180,7 +195,10 @@ def get_teacher_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Sess
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    if not db_teacher.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended. Contact your institution.")
+
     is_valid = False
     if db_teacher.password.startswith("$2b$"):
         is_valid = verify_password(form_data.password, db_teacher.password)
@@ -215,21 +233,21 @@ def teacher_login(data: TeacherLogin, db: Session = Depends(get_db)):
     db_teacher = db.query(Teacher).filter(Teacher.username == data.username).first()
     if not db_teacher:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
+    if not db_teacher.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended. Contact your institution.")
+
     # Support both hashed and plain text passwords for backward compatibility
     is_valid = False
     if db_teacher.password.startswith("$2b$"):
-        # Hashed password - use verify_password
         is_valid = verify_password(data.password, db_teacher.password)
     else:
-        # Plain text password (legacy) - direct comparison
         is_valid = (db_teacher.password == data.password)
-        # Optionally upgrade to hashed password on successful login
         if is_valid:
             logger.info(f"Upgrading plain text password to hashed for teacher: {data.username}")
             db_teacher.password = hash_password(data.password)
             db.commit()
-    
+
     if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -710,17 +728,22 @@ def update_video(
 @router.get("/class/{class_level}")
 def get_teachers_by_class(class_level: str, db: Session = Depends(get_db)):
     """Get all teachers who have videos for a specific class"""
-    # Get all videos for the class
-    videos = db.query(Video).filter(Video.class_level == class_level).all()
-    
+    # Only show non-flagged videos
+    videos = db.query(Video).filter(
+        Video.class_level == class_level,
+        Video.is_flagged == False,
+    ).all()
+
     if not videos:
-        raise HTTPException(status_code=404, detail="No teachers found for this class")
+        return []  # return empty list instead of 404
 
-    # Get unique teachers
+    # Get unique active teachers
     teacher_ids = list(set([v.teacher_id for v in videos]))
-    teachers = db.query(Teacher).filter(Teacher.id.in_(teacher_ids)).all()
+    teachers = db.query(Teacher).filter(
+        Teacher.id.in_(teacher_ids),
+        Teacher.is_active == True,
+    ).all()
 
-    # Create response with teacher info and video count
     response = []
     for teacher in teachers:
         teacher_videos = [v for v in videos if v.teacher_id == teacher.id]
@@ -750,7 +773,8 @@ def get_teacher_videos_by_class(
 
     videos = db.query(Video).filter(
         Video.teacher_id == teacher_id,
-        Video.class_level == class_level
+        Video.class_level == class_level,
+        Video.is_flagged == False,
     ).all()
 
     return {

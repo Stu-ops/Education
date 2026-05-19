@@ -136,8 +136,58 @@ def get_topics_for_current_user(class_num: int = Depends(get_user_class_number))
     if topics_for_class is None:
         raise HTTPException(status_code=404, detail=f"No topics found for class {class_num}")
 
-    # Return only the topic category names (keys) as a list of strings
     logger.debug(f"Returned topics for class {class_num}: {list(topics_for_class.keys())}")
+    return list(topics_for_class.keys())
+
+
+@router.get("/by-subject", response_model=list)
+def get_topics_by_subject(
+    subject: str = "General",
+    class_num: int = Depends(get_user_class_number),
+):
+    """Return topic category names for the current user's class filtered by subject.
+
+    For classes 6-12 with a recognised subject, reads class6-12.json.
+    Falls back to topics.json (Mathematics) for all other cases.
+    """
+    CLASS6_12_PATH = BASE_DIR / "syllabus" / "class6-12.json"
+
+    # Map frontend subject names → JSON keys in class6-12.json
+    SUBJECT_KEY_MAP = {
+        "mathematics": "Mathematics_Syllabus",
+        "math": "Mathematics_Syllabus",
+        "maths": "Mathematics_Syllabus",
+        "physics": "Mathematics_Syllabus",   # extend when more subjects added
+        "chemistry": "Mathematics_Syllabus",
+        "biology": "Mathematics_Syllabus",
+        "science": "Mathematics_Syllabus",
+    }
+
+    subject_lower = subject.strip().lower()
+    class_key = f"Class_{class_num}"
+
+    # Try class6-12.json for classes 6-12
+    if class_num >= 6 and CLASS6_12_PATH.exists():
+        try:
+            with CLASS6_12_PATH.open("r", encoding="utf-8") as f:
+                data612 = json.load(f)
+
+            syllabus_key = SUBJECT_KEY_MAP.get(subject_lower)
+            if syllabus_key and syllabus_key in data612:
+                class_data = data612[syllabus_key].get(class_key, {})
+                if class_data:
+                    topics = list(class_data.keys())
+                    logger.debug(f"by-subject: class={class_num} subject={subject} → {topics}")
+                    return topics
+        except Exception as e:
+            logger.warning(f"Failed to read class6-12.json: {e}")
+
+    # Fallback: topics.json (class-based, subject-agnostic)
+    key = f"class_{class_num}"
+    data = load_topics_data()
+    topics_for_class = data.get(key)
+    if topics_for_class is None:
+        return []
     return list(topics_for_class.keys())
 
 

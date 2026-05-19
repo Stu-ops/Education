@@ -29,14 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from routers import user, chat, history, explore, syllabus, topics, parent, quotes_router, teacher, config, contest, vector_ingest
+from routers import user, chat, history, explore, syllabus, topics, parent, quotes_router, teacher, config, contest, vector_ingest, principal, admin as admin_router
 from fastapi.middleware.cors import CORSMiddleware
 # create tables
 def ensure_streak_columns():
-    """Add `current_streak` and `max_streak` columns to `users` table if missing (SQLite).
-
-    This is a lightweight dev-time migration to avoid manual DB edits.
-    """
+    """Add `current_streak` and `max_streak` columns to `users` table if missing (SQLite)."""
     try:
         conn = engine.connect()
         try:
@@ -47,7 +44,6 @@ def ensure_streak_columns():
                 stmts.append("ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0")
             if "max_streak" not in cols:
                 stmts.append("ALTER TABLE users ADD COLUMN max_streak INTEGER DEFAULT 0")
-            # add Parent_feedback column if missing
             if "Parent_feedback" not in cols:
                 stmts.append("ALTER TABLE users ADD COLUMN Parent_feedback TEXT")
             for s in stmts:
@@ -60,9 +56,79 @@ def ensure_streak_columns():
         logger.error(f"DB migration error (non-fatal): {e}")
 
 
+def ensure_new_columns():
+    """Add new columns introduced by the Principal/Admin module to existing tables."""
+    try:
+        conn = engine.connect()
+        try:
+            migrations = []
+
+            # users table — is_active
+            res = conn.execute(text("PRAGMA table_info('users')")).mappings().all()
+            user_cols = [r["name"] for r in res]
+            if "is_active" not in user_cols:
+                migrations.append("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1")
+
+            # teachers table — college_id, is_active, joined_at
+            res = conn.execute(text("PRAGMA table_info('teachers')")).mappings().all()
+            teacher_cols = [r["name"] for r in res]
+            if "college_id" not in teacher_cols:
+                migrations.append("ALTER TABLE teachers ADD COLUMN college_id INTEGER REFERENCES colleges(id)")
+            if "is_active" not in teacher_cols:
+                migrations.append("ALTER TABLE teachers ADD COLUMN is_active INTEGER DEFAULT 1")
+            if "joined_at" not in teacher_cols:
+                migrations.append("ALTER TABLE teachers ADD COLUMN joined_at TEXT")
+
+            # videos table — is_flagged
+            res = conn.execute(text("PRAGMA table_info('videos')")).mappings().all()
+            video_cols = [r["name"] for r in res]
+            if "is_flagged" not in video_cols:
+                migrations.append("ALTER TABLE videos ADD COLUMN is_flagged INTEGER DEFAULT 0")
+
+            for stmt in migrations:
+                conn.execute(text(stmt))
+            conn.commit()
+            if migrations:
+                logger.info(f"DB migration applied (new columns): {migrations}")
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"DB migration error (non-fatal): {e}")
+
+
 # Ensure schema exists and run lightweight migrations
 ensure_streak_columns()
+ensure_new_columns()
 Base.metadata.create_all(bind=engine)
+
+
+def seed_default_admin():
+    """Create a default admin account from env vars if none exists."""
+    from models.models import Admin
+    from auth import hash_password as _hash
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+    try:
+        db = __import__("database").SessionLocal()
+        try:
+            if not db.query(Admin).first():
+                admin = Admin(
+                    username=admin_username,
+                    password=_hash(admin_password),
+                    name="Platform Admin",
+                    email=os.getenv("ADMIN_EMAIL", ""),
+                    created_at=__import__("datetime").datetime.utcnow().isoformat(),
+                )
+                db.add(admin)
+                db.commit()
+                logger.info(f"Default admin seeded: username='{admin_username}'")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Admin seeding error (non-fatal): {e}")
+
+
+seed_default_admin()
 
 app = FastAPI()
 
@@ -173,3 +239,5 @@ app.include_router(contest.router)
 app.include_router(quotes_router.router)
 app.include_router(config.router)
 app.include_router(vector_ingest.router)
+app.include_router(principal.router)
+app.include_router(admin_router.router)

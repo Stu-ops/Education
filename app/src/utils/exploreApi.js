@@ -35,3 +35,18 @@ export async function getTopics() {
     return [];
   }
 }
+
+export async function getTopicsBySubject(subject) {
+  const endpoint = `/topics/by-subject?subject=${encodeURIComponent(subject)}`;
+  try {
+    const token = await storage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axios.get(`${API_BASE_URL}${endpoint}`, { headers });
+    apiLogger(endpoint, 'GET', res.data);
+    return res.data;
+  } catch (error) {
+    apiLogger(endpoint, 'GET', null, error);
+    console.error('Error fetching topics by subject:', error);
+    return [];
+  }
+}

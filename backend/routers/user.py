@@ -40,11 +40,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 # ---------------- OAuth2 Token Endpoint (for FastAPI Swagger UI) ----------------
 @router.post("/token")
 def get_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """OAuth2-compliant token endpoint for FastAPI docs 'Authorize' button.
-    
-    This endpoint uses form data (username/password) as required by OAuth2.
-    Use this with the 'Authorize' button in FastAPI docs.
-    """
+    """OAuth2-compliant token endpoint for FastAPI docs 'Authorize' button."""
     logger.info(f"OAuth2 token request for user: {form_data.username}")
     db_user = db.query(User).filter(User.username == form_data.username).first()
     if not db_user:
@@ -54,7 +50,10 @@ def get_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = De
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    if not db_user.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended. Contact your institution.")
+
     # Support both hashed and plain text passwords for backward compatibility
     is_valid = False
     if db_user.password.startswith("$2b$"):
@@ -93,16 +92,12 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     if not db_user:
         logger.warning(f"JSON login failed - user not found: {data.username}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    # Support both hashed and plain text passwords for backward compatibility
-    # Check if password is hashed (bcrypt hashes start with $2b$)
-    is_valid = False
 
-    # Plain text password (legacy) - direct comparison
+    if not db_user.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended. Contact your institution.")
+
     is_valid = (db_user.password == data.password)
-    # Optionally upgrade to hashed password on successful login
-        
-    
+
     if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 

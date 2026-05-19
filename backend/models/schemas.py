@@ -197,6 +197,7 @@ class TeacherBase(BaseModel):
 
 class TeacherCreate(TeacherBase):
     password: str
+    invite_code: Optional[str] = None  # college invite code
 
 
 class TeacherLogin(BaseModel):
@@ -352,3 +353,187 @@ class ContestSubmitOut(BaseModel):
 
 class ContestResultOut(ContestSubmitOut):
     pass
+
+
+# ---------- College Schemas ----------
+class CollegeCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CollegeOut(BaseModel):
+    id: int
+    name: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    invite_code: str
+    is_active: bool
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+# ---------- Principal Schemas ----------
+class PrincipalCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6, max_length=100)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    college: CollegeCreate
+
+    class Config:
+        from_attributes = True
+
+
+class PrincipalLogin(BaseModel):
+    username: str
+    password: str
+
+
+class PrincipalOut(BaseModel):
+    id: int
+    username: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: bool
+    college_id: int
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class PrincipalWithCollege(PrincipalOut):
+    college: Optional[CollegeOut] = None
+
+
+# ---------- Admin Schemas ----------
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+
+class AdminOut(BaseModel):
+    id: int
+    username: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+# ---------- Audit Log Schemas ----------
+class AuditLogOut(BaseModel):
+    id: int
+    actor_role: str
+    actor_id: int
+    action: str
+    target_type: Optional[str] = None
+    target_id: Optional[int] = None
+    detail: Optional[str] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+# ---------- System Config Schemas ----------
+class SystemConfigOut(BaseModel):
+    key: str
+    value: Optional[str] = None
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class SystemConfigUpdate(BaseModel):
+    value: Optional[str] = None
+
+
+# ---------- Principal Analytics Schemas ----------
+class CollegeAnalytics(BaseModel):
+    teacher_count: int
+    student_count: int
+    total_uploads: int
+    avg_student_score: float
+
+
+class StudentPerformance(BaseModel):
+    username: str
+    name: Optional[str] = None
+    class_level: Optional[str] = None
+    score: float
+    accuracy: float
+    total_attempts: int
+    correct_attempts: int
+    current_streak: int
+    max_streak: int
+
+
+class TeacherContentStats(BaseModel):
+    teacher_id: int
+    teacher_name: Optional[str]
+    video_count: int
+    total_views: int
+    most_watched_title: Optional[str]
+
+
+class CollegeContestStats(BaseModel):
+    total_participants: int
+    total_attempts: int
+    avg_score: float
+    top_score: float
+
+
+# ---------- Admin Platform Stats ----------
+class PlatformStats(BaseModel):
+    total_colleges: int
+    total_principals: int
+    total_teachers: int
+    total_students: int
+    total_videos: int
+    total_contest_attempts: int
+
+
+class CollegeWithStats(BaseModel):
+    id: int
+    name: str
+    is_active: bool
+    invite_code: str
+    created_at: str
+    principal_username: Optional[str] = None
+    principal_name: Optional[str] = None
+    teacher_count: int
+    student_count: int
+
+    class Config:
+        from_attributes = True
+
+
+class VideoAdminOut(BaseModel):
+    id: int
+    title: str
+    class_level: str
+    subject: Optional[str] = None
+    upload_date: str
+    view_count: int
+    file_size: Optional[int] = None
+    is_flagged: bool
+    teacher_id: int
+    teacher_name: Optional[str] = None
+    college_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True

@@ -1,21 +1,27 @@
-// VideoPlayerScreen for React Native
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Play, Pause, RotateCcw } from 'lucide-react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Video, ResizeMode } from 'expo-av';
+import Constants from 'expo-constants';
 import colors from '../../styles/colors';
 
 const { width } = Dimensions.get('window');
+const BACKEND_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8000';
 
 export default function VideoPlayerScreen() {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { videoUrl, videoTitle } = route.params || {};
+  const { videoUrl, videoTitle } = useLocalSearchParams();
   const videoRef = useRef(null);
   const [status, setStatus] = useState({});
+
+  // Resolve full URL — file_path from backend is a relative path like /uploads/videos/...
+  const resolvedUrl = videoUrl
+    ? videoUrl.startsWith('http')
+      ? videoUrl
+      : `${BACKEND_URL}${videoUrl}`
+    : null;
 
   const handlePlayPause = async () => {
     if (status.isPlaying) {
@@ -30,22 +36,33 @@ export default function VideoPlayerScreen() {
     await videoRef.current?.playAsync();
   };
 
+  const formatTime = (ms) => {
+    if (!ms) return '0:00';
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    return `${m}:${String(s % 60).padStart(2, '0')}`;
+  };
+
   return (
-    <LinearGradient colors={colors.gradients.main} style={styles.container}>
+    <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color="#FFFFFF" />
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <ArrowLeft size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{videoTitle || 'Video'}</Text>
-          <View style={{ width: 24 }} />
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {videoTitle || 'Video'}
+          </Text>
+          <View style={{ width: 40 }} />
         </View>
 
+        {/* Video */}
         <View style={styles.videoContainer}>
-          {videoUrl ? (
+          {resolvedUrl ? (
             <Video
               ref={videoRef}
-              source={{ uri: videoUrl }}
+              source={{ uri: resolvedUrl }}
               style={styles.video}
               useNativeControls
               resizeMode={ResizeMode.CONTAIN}
@@ -58,30 +75,38 @@ export default function VideoPlayerScreen() {
           )}
         </View>
 
+        {/* Controls */}
         <View style={styles.controls}>
-          <TouchableOpacity style={styles.controlButton} onPress={handleRestart}>
-            <RotateCcw size={24} color="#FFFFFF" />
+          <TouchableOpacity style={styles.controlBtn} onPress={handleRestart}>
+            <RotateCcw size={22} color="#FFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
-            <LinearGradient
-              colors={['#22C55E', '#16A34A']}
-              style={styles.playButtonGradient}
-            >
-              {status.isPlaying ? (
-                <Pause size={32} color="#FFFFFF" />
-              ) : (
-                <Play size={32} color="#FFFFFF" />
-              )}
+
+          <TouchableOpacity style={styles.playBtn} onPress={handlePlayPause}>
+            <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.playBtnGrad}>
+              {status.isPlaying
+                ? <Pause size={30} color="#FFF" />
+                : <Play size={30} color="#FFF" />}
             </LinearGradient>
           </TouchableOpacity>
+
           <View style={{ width: 48 }} />
         </View>
 
-        <View style={styles.info}>
-          <Text style={styles.infoTitle}>{videoTitle}</Text>
+        {/* Info */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle} numberOfLines={2}>{videoTitle || 'Video'}</Text>
           <Text style={styles.infoStatus}>
-            {status.isPlaying ? 'Playing' : status.positionMillis > 0 ? 'Paused' : 'Ready to play'}
+            {status.isPlaying
+              ? `▶ Playing — ${formatTime(status.positionMillis)}`
+              : status.positionMillis > 0
+                ? `⏸ Paused — ${formatTime(status.positionMillis)}`
+                : 'Ready to play'}
           </Text>
+          {status.durationMillis ? (
+            <Text style={styles.infoDuration}>
+              Duration: {formatTime(status.durationMillis)}
+            </Text>
+          ) : null}
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -92,75 +117,41 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
+    flexDirection: 'row', alignItems: 'center',
+    padding: 16, gap: 8,
   },
+  backBtn: { padding: 4 },
   headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginHorizontal: 12,
+    flex: 1, fontSize: 17, fontWeight: 'bold',
+    color: '#FFF', textAlign: 'center',
   },
   videoContainer: {
-    width: width,
-    height: width * 0.5625, // 16:9 aspect ratio
+    width,
+    height: width * 0.5625, // 16:9
     backgroundColor: '#000',
   },
-  video: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 16,
-  },
+  video: { width: '100%', height: '100%' },
+  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  placeholderText: { color: 'rgba(255,255,255,0.5)', fontSize: 15 },
   controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    gap: 24,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', padding: 20, gap: 24,
   },
-  controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  controlBtn: {
+    width: 46, height: 46, borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  playButton: {
-    borderRadius: 36,
-    overflow: 'hidden',
+  playBtn: { borderRadius: 34, overflow: 'hidden' },
+  playBtnGrad: {
+    width: 68, height: 68, borderRadius: 34,
+    alignItems: 'center', justifyContent: 'center',
   },
-  playButtonGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  infoCard: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    margin: 16, borderRadius: 14, padding: 16,
   },
-  info: {
-    padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    margin: 16,
-    borderRadius: 12,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  infoStatus: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-  },
+  infoTitle: { fontSize: 16, fontWeight: '600', color: '#FFF', marginBottom: 6 },
+  infoStatus: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  infoDuration: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
 });

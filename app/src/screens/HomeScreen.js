@@ -17,6 +17,7 @@ export default function HomeScreen({ route }) {
   const [initialTopic, setInitialTopic] = useState(null);
   const [showQuote, setShowQuote] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [selectedSubject, setSelectedSubject] = useState('General'); // shared state
 
   const preloadMessages = route?.params?.messages || null;
   const preloadSessionId = route?.params?.session_id || null;
@@ -62,30 +63,38 @@ export default function HomeScreen({ route }) {
       )}
 
       <SafeAreaView style={styles.safeArea}>
-        <TouchableWithoutFeedback onPress={() => setIsChatExpanded(false)}>
-          <View style={styles.content}>
-            <View style={styles.card}>
-              <Header onReset={handleReset} />
-              <ProgressBar loading={loading} />
+        <View style={styles.content}>
+          <View style={styles.card}>
+            <Header onReset={handleReset} />
+            <ProgressBar loading={loading} />
 
-              <View style={styles.mainContent}>
-                {!isChatExpanded && (
-                  <FeatureGrid onTopicClick={handleTopicClick} />
-                )}
+            <View style={styles.mainContent}>
+              {!isChatExpanded && (
+                <TouchableWithoutFeedback onPress={() => setIsChatExpanded(false)}>
+                  <View>
+                    <FeatureGrid
+                      key={selectedSubject}
+                      onTopicClick={handleTopicClick}
+                      selectedSubject={selectedSubject}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+              )}
 
-                <ChatSection
-                  setIsChatExpanded={setIsChatExpanded}
-                  isChatExpanded={isChatExpanded}
-                  setLoading={setLoading}
-                  loading={loading}
-                  loadMessages={preloadMessages}
-                  preloadSessionId={preloadSessionId}
-                  initialTopic={initialTopic}
-                />
-              </View>
+              <ChatSection
+                setIsChatExpanded={setIsChatExpanded}
+                isChatExpanded={isChatExpanded}
+                setLoading={setLoading}
+                loading={loading}
+                loadMessages={preloadMessages}
+                preloadSessionId={preloadSessionId}
+                initialTopic={initialTopic}
+                selectedSubject={selectedSubject}
+                onSubjectChange={setSelectedSubject}
+              />
             </View>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );

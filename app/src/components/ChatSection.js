@@ -107,17 +107,17 @@ const getTeacherExpression = (text) => {
   if (!text) return 'neutral';
   const textStr = typeof text === 'string' ? text : String(text || '');
   const lowerText = textStr.toLowerCase();
-  
-  if (lowerText.includes('correct') || lowerText.includes('great') || 
-      lowerText.includes('excellent') || lowerText.includes('perfect')) {
+
+  if (lowerText.includes('correct') || lowerText.includes('great') ||
+    lowerText.includes('excellent') || lowerText.includes('perfect')) {
     return 'celebrating';
   }
-  if (lowerText.includes('?') || lowerText.includes('let me') || 
-      lowerText.includes('thinking')) {
+  if (lowerText.includes('?') || lowerText.includes('let me') ||
+    lowerText.includes('thinking')) {
     return 'thinking';
   }
-  if (lowerText.includes('good') || lowerText.includes('nice') || 
-      lowerText.includes('well done')) {
+  if (lowerText.includes('good') || lowerText.includes('nice') ||
+    lowerText.includes('well done')) {
     return 'happy';
   }
   return 'neutral';
@@ -131,18 +131,30 @@ export default function ChatSection({
   loadMessages,
   preloadSessionId = null,
   initialTopic,
+  selectedSubject: externalSubject,
+  onSubjectChange,
 }) {
   const { lang } = useLanguage();
   const { addConversation } = useHistoryStore();
   const { user } = useUser();
   const scrollViewRef = useRef(null);
 
+  const SUBJECTS = ['General', 'Mathematics', 'Science', 'English', 'History', 'Geography', 'Physics', 'Chemistry', 'Biology'];
+  // Use external subject if provided (lifted state), otherwise manage internally
+  const [internalSubject, setInternalSubject] = useState('General');
+  const selectedSubject = externalSubject !== undefined ? externalSubject : internalSubject;
+  const setSelectedSubject = (s) => {
+    setInternalSubject(s);
+    if (onSubjectChange) onSubjectChange(s);
+  };
+  const [showSubjectPicker, setShowSubjectPicker] = useState(false);
+
   const [messages, setMessages] = useState(
     loadMessages || [
       {
         text: lang === 'hi'
           ? 'नमस्ते! मैं आपके सवालों में मदद कर सकता हूँ।'
-          : 'Hello! I can help with your  questions.',
+          : 'Hello! I can help with your questions.',
         sender: 'bot',
       },
     ]
@@ -226,9 +238,9 @@ export default function ChatSection({
     try {
       setLoading(true);
       apiLogger('/chat/send/instant', 'POST (sending)', { text: userMessage, username: user.username });
-      
+
       const response = await sendToGemini(
-        { text: userMessage, image: image || null, time_taken: timeTaken },
+        { text: userMessage, image: image || null, time_taken: timeTaken, subject: selectedSubject !== 'General' ? selectedSubject : null },
         user.username
       );
 
@@ -271,9 +283,9 @@ export default function ChatSection({
     try {
       setLoading(true);
       apiLogger('/chat/send/check', 'POST (sending)', { text: userMessage, username: user.username });
-      
+
       const response = await sendCheckRequest(
-        { text: userMessage, image: image || null, time_taken: timeTaken },
+        { text: userMessage, image: image || null, time_taken: timeTaken, subject: selectedSubject !== 'General' ? selectedSubject : null },
         user.username
       );
 
@@ -308,9 +320,18 @@ export default function ChatSection({
   const content = (
     <View style={styles.inner}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>
-        {lang === 'hi' ? 'शिक्षक' : ' Teacher'}
-        </Text>
+        {/* Subject selector pill */}
+        <TouchableOpacity
+          style={styles.subjectPill}
+          onPress={() => setShowSubjectPicker(true)}
+        >
+          <Text style={styles.subjectPillLabel}>
+            {lang === 'hi' ? 'विषय: ' : 'Subject: '}
+          </Text>
+          <Text style={styles.subjectPillValue}>{selectedSubject}</Text>
+          <Text style={styles.subjectPillArrow}>▾</Text>
+        </TouchableOpacity>
+
         {isChatExpanded && (
           <TouchableOpacity style={styles.homeChip} onPress={() => setIsChatExpanded(false)}>
             <Text style={styles.homeChipText}>Home</Text>
@@ -385,12 +406,68 @@ export default function ChatSection({
     </View>
   );
 
-  return isChatExpanded ? (
-    <Modal visible transparent={false} animationType="slide" onRequestClose={() => setIsChatExpanded(false)}>
-      <View style={styles.fullscreen}>{content}</View>
-    </Modal>
-  ) : (
-    <View style={styles.container}>{content}</View>
+  // Subject picker modal (rendered outside content so it overlays everything)
+  return (
+    <>
+      {isChatExpanded ? (
+        <Modal visible transparent={false} animationType="slide" onRequestClose={() => setIsChatExpanded(false)}>
+          <View style={styles.fullscreen}>{content}</View>
+        </Modal>
+      ) : (
+        <View style={styles.container}>{content}</View>
+      )}
+
+      {/* Subject Picker Sheet */}
+      <Modal
+        visible={showSubjectPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSubjectPicker(false)}
+      >
+        <View style={styles.pickerOverlay}>
+          {/* Tap outside to dismiss */}
+          <TouchableOpacity
+            style={styles.pickerBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowSubjectPicker(false)}
+          />
+          <View style={styles.pickerSheet}>
+            <View style={styles.pickerHandle} />
+            <Text style={styles.pickerTitle}>
+              {lang === 'hi' ? 'विषय चुनें' : 'Select Subject'}
+            </Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              {SUBJECTS.map(subj => (
+                <TouchableOpacity
+                  key={subj}
+                  style={[
+                    styles.pickerItem,
+                    selectedSubject === subj && styles.pickerItemActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedSubject(subj);
+                    setShowSubjectPicker(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.pickerItemText,
+                    selectedSubject === subj && styles.pickerItemTextActive,
+                  ]}>
+                    {subj}
+                  </Text>
+                  {selectedSubject === subj && (
+                    <Check size={16} color={colors.accent.orange} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -582,6 +659,87 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.5,
+  },
+  // Subject selector
+  subjectPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary.creamDark,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+    gap: 4,
+  },
+  subjectPillLabel: {
+    fontSize: 12,
+    color: colors.text.muted,
+  },
+  subjectPillValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accent.orange,
+  },
+  subjectPillArrow: {
+    fontSize: 10,
+    color: colors.text.muted,
+  },
+  // Subject picker modal
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  pickerBackdrop: {
+    flex: 1,
+  },
+  pickerSheet: {
+    backgroundColor: colors.primary.creamLight,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    paddingTop: 12,
+    maxHeight: '70%',
+    borderWidth: 1,
+    borderColor: colors.primary.border,
+  },
+  pickerHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary.border,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  pickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text.primary,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  pickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  pickerItemActive: {
+    backgroundColor: colors.primary.creamDark,
+  },
+  pickerItemText: {
+    fontSize: 15,
+    color: colors.text.primary,
+    flex: 1,
+  },
+  pickerItemTextActive: {
+    fontWeight: '700',
+    color: colors.accent.orange,
   },
 });
 

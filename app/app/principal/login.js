@@ -5,28 +5,28 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useTeacher } from '../../src/contexts/TeacherContext';
 import { ArrowLeft } from 'lucide-react-native';
+import { usePrincipal } from '../../src/contexts/PrincipalContext';
 
-export default function TeacherLoginScreen() {
-  const { login } = useTeacher();
+export default function PrincipalLoginScreen() {
+  const { login } = usePrincipal();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!username || !password) { setError('Please fill all fields'); return; }
-    setIsLoading(true);
+    setLoading(true);
     setError('');
-    const result = await login({ username, password });
-    setIsLoading(false);
+    const result = await login(username, password);
+    setLoading(false);
     if (!result.success) setError(result.error || 'Login failed');
-    else router.replace('/teacher/dashboard');
+    else router.replace('/principal/dashboard');
   };
 
   return (
-    <LinearGradient colors={['#059669', '#047857']} style={styles.container}>
+    <LinearGradient colors={['#4F46E5', '#3730A3']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav}>
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -35,9 +35,9 @@ export default function TeacherLoginScreen() {
               <ArrowLeft size={22} color="#FFF" />
             </TouchableOpacity>
 
-            <Text style={styles.emoji}>👨‍🏫</Text>
-            <Text style={styles.title}>Teacher Portal</Text>
-            <Text style={styles.subtitle}>Manage your students & content</Text>
+            <Text style={styles.emoji}>🏫</Text>
+            <Text style={styles.title}>Principal Portal</Text>
+            <Text style={styles.subtitle}>Manage your institution</Text>
 
             <View style={styles.form}>
               <Text style={styles.label}>Username</Text>
@@ -59,19 +59,15 @@ export default function TeacherLoginScreen() {
                 secureTextEntry
               />
               {error ? <View style={styles.errorBox}><Text style={styles.errorText}>⚠️ {error}</Text></View> : null}
-              <TouchableOpacity
-                style={[styles.btn, isLoading && styles.btnDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                <LinearGradient colors={['#10B981', '#059669']} style={styles.btnGrad}>
-                  <Text style={styles.btnText}>{isLoading ? 'Please wait...' : 'Login'}</Text>
+              <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleLogin} disabled={loading}>
+                <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.btnGrad}>
+                  <Text style={styles.btnText}>{loading ? 'Please wait...' : 'Login'}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/teacher/register')}>
-              <Text style={styles.linkText}>New teacher? Register here</Text>
+            <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/principal/register')}>
+              <Text style={styles.linkText}>New principal? Register your college</Text>
             </TouchableOpacity>
 
           </ScrollView>
@@ -92,14 +88,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginBottom: 28 },
   form: { backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 18, padding: 20 },
   label: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 6, marginTop: 4, fontWeight: '600' },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 12,
-    padding: 14,
-    color: '#FFF',
-    fontSize: 15,
-    marginBottom: 14,
-  },
+  input: { backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 12, padding: 14, color: '#FFF', fontSize: 15, marginBottom: 14 },
   errorBox: { backgroundColor: 'rgba(239,68,68,0.25)', borderRadius: 10, padding: 12, marginBottom: 14 },
   errorText: { color: '#FCA5A5', textAlign: 'center', fontSize: 13 },
   btn: { borderRadius: 12, overflow: 'hidden', marginTop: 4 },
@@ -107,5 +96,5 @@ const styles = StyleSheet.create({
   btnGrad: { padding: 14, alignItems: 'center' },
   btnText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
   linkRow: { alignItems: 'center', marginTop: 24 },
-  linkText: { color: '#A7F3D0', fontSize: 14 },
+  linkText: { color: '#C7D2FE', fontSize: 14 },
 });

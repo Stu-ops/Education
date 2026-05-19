@@ -39,7 +39,7 @@ export default {
     plugins: ["expo-router"],
 
     extra: {
-      apiUrl: "http://192.168.1.7:8000",
+      apiUrl: "http://192.168.1.4:8000",
       API_LOGGER: process.env.EXPO_PUBLIC_API_LOGGER ?? process.env.API_LOGGER ?? "false"
     }
   }

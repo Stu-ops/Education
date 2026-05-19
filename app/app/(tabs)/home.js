@@ -1,6 +1,6 @@
 // Home Screen
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, StatusBar, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableWithoutFeedback, StatusBar, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { BACKEND_URL } from '../../src/utils/api';
@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const [showQuote, setShowQuote] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [loadedMessages, setLoadedMessages] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState('General'); // ← shared subject state
 
   // Parse messages from params if they exist
   const safeParseMessages = (raw) => {
@@ -50,10 +51,10 @@ export default function HomeScreen() {
           senderRaw === 'assistant' || senderRaw === 'bot' || senderRaw === 'ai'
             ? 'bot'
             : senderRaw === 'user' || senderRaw === 'student'
-            ? 'user'
-            : m?.is_bot
-            ? 'bot'
-            : 'user';
+              ? 'user'
+              : m?.is_bot
+                ? 'bot'
+                : 'user';
         return { text: String(text || ''), image, sender };
       }).filter((m) => m.text || m.image);
     } catch {
@@ -112,7 +113,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Motivational Quote Overlay */}
       {showQuote && isFirstLoad && (
         <MotivationalQuote onComplete={handleQuoteComplete} />
@@ -133,8 +134,11 @@ export default function HomeScreen() {
               <View style={styles.mainContent}>
                 {!isChatExpanded && (
                   <>
-                    <FeatureGrid onTopicClick={handleTopicClick} />
-                    <Text style={styles.seeMore}>See More</Text>
+                    <FeatureGrid
+                      key={selectedSubject}
+                      onTopicClick={handleTopicClick}
+                      selectedSubject={selectedSubject}
+                    />
                   </>
                 )}
 
@@ -146,6 +150,8 @@ export default function HomeScreen() {
                   loadMessages={loadedMessages || preloadMessages}
                   preloadSessionId={preloadSessionId}
                   initialTopic={initialTopic}
+                  selectedSubject={selectedSubject}
+                  onSubjectChange={setSelectedSubject}
                 />
               </View>
             </View>

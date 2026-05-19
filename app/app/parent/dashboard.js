@@ -1,12 +1,7 @@
-// Parent Dashboard Screen
 import { useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
+  View, Text, StyleSheet, ScrollView,
+  TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,9 +12,7 @@ import { LogOut, User, TrendingUp, Clock, Target, Award } from 'lucide-react-nat
 export default function ParentDashboardScreen() {
   const { parent, stats, statsLoading, fetchStats, logout } = useParent();
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -29,7 +22,7 @@ export default function ParentDashboardScreen() {
   if (statsLoading && !stats) {
     return (
       <LinearGradient colors={['#7C3AED', '#4F46E5']} style={styles.container}>
-        <View style={styles.loadingContainer}>
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color="#FFF" />
           <Text style={styles.loadingText}>Loading dashboard...</Text>
         </View>
@@ -37,151 +30,160 @@ export default function ParentDashboardScreen() {
     );
   }
 
-  const childStats = stats?.child || {};
+  const child = stats?.child || {};
   const progress = stats?.progress || {};
+  const weeklyGoal = progress.weekly_goal || 20;
+  const weeklySolved = progress.weekly_solved || 0;
+  const weeklyPct = Math.min((weeklySolved / weeklyGoal) * 100, 100);
 
   return (
     <LinearGradient colors={['#7C3AED', '#4F46E5']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
           {/* Header */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.greeting}>👨‍👩‍👧 Parent Dashboard</Text>
-              <Text style={styles.childName}>
-                Monitoring: {childStats.name || childStats.username || 'Your Child'}
+            <View style={styles.headerText}>
+              <Text style={styles.greeting}>Parent Dashboard</Text>
+              <Text style={styles.subText} numberOfLines={1}>
+                Monitoring: {child.name || child.username || 'Your Child'}
               </Text>
             </View>
-            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-              <LogOut size={24} color="#FFF" />
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+              <LogOut size={22} color="#FFF" />
             </TouchableOpacity>
           </View>
 
-          {/* Child Info Card */}
+          {/* Child Profile Card */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <User size={20} color="#A855F7" />
+              <User size={18} color="#C4B5FD" />
               <Text style={styles.cardTitle}>Child Profile</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name:</Text>
-              <Text style={styles.infoValue}>{childStats.name || 'N/A'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Class:</Text>
-              <Text style={styles.infoValue}>{childStats.class_level || 'N/A'}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Level:</Text>
-              <Text style={styles.infoValue}>{childStats.level || 1}</Text>
-            </View>
+            {[
+              ['Name', child.name || 'N/A'],
+              ['Class', child.class_level || 'N/A'],
+              ['Level', child.level || 1],
+            ].map(([label, value]) => (
+              <View key={label} style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{label}</Text>
+                <Text style={styles.infoValue}>{value}</Text>
+              </View>
+            ))}
           </View>
 
-          {/* Progress Stats */}
+          {/* Stats Grid — 2 columns */}
           <View style={styles.statsGrid}>
-            <LinearGradient colors={['rgba(168,85,247,0.3)', 'rgba(124,58,237,0.3)']} style={styles.statCard}>
-              <TrendingUp size={24} color="#A855F7" />
-              <Text style={styles.statValue}>{progress.problems_solved || 0}</Text>
-              <Text style={styles.statLabel}>Problems Solved</Text>
-            </LinearGradient>
-
-            <LinearGradient colors={['rgba(34,197,94,0.3)', 'rgba(16,185,129,0.3)']} style={styles.statCard}>
-              <Target size={24} color="#22C55E" />
-              <Text style={styles.statValue}>{progress.accuracy || 0}%</Text>
-              <Text style={styles.statLabel}>Accuracy</Text>
-            </LinearGradient>
-
-            <LinearGradient colors={['rgba(59,130,246,0.3)', 'rgba(6,182,212,0.3)']} style={styles.statCard}>
-              <Clock size={24} color="#3B82F6" />
-              <Text style={styles.statValue}>{progress.time_spent || 0}</Text>
-              <Text style={styles.statLabel}>Minutes</Text>
-            </LinearGradient>
-
-            <LinearGradient colors={['rgba(249,115,22,0.3)', 'rgba(234,179,8,0.3)']} style={styles.statCard}>
-              <Award size={24} color="#F97316" />
-              <Text style={styles.statValue}>{progress.streak || 0}</Text>
-              <Text style={styles.statLabel}>Day Streak</Text>
-            </LinearGradient>
+            <StatCard icon={TrendingUp} color="#C4B5FD" value={progress.problems_solved || 0} label="Problems" />
+            <StatCard icon={Target} color="#6EE7B7" value={`${progress.accuracy || 0}%`} label="Accuracy" />
+            <StatCard icon={Clock} color="#93C5FD" value={progress.time_spent || 0} label="Minutes" />
+            <StatCard icon={Award} color="#FCD34D" value={progress.streak || 0} label="Streak" />
           </View>
 
           {/* Weekly Progress */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>📊 Weekly Progress</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${Math.min((progress.weekly_solved || 0) / (progress.weekly_goal || 20) * 100, 100)}%` }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.progressText}>
-                {progress.weekly_solved || 0} / {progress.weekly_goal || 20} problems
-              </Text>
+            <Text style={styles.cardTitle}>Weekly Progress</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${weeklyPct}%` }]} />
             </View>
+            <Text style={styles.progressText}>
+              {weeklySolved} / {weeklyGoal} problems this week
+            </Text>
           </View>
 
-          {/* Strengths & Focus */}
+          {/* Strengths */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>💪 Strengths & Focus Areas</Text>
+            <Text style={styles.cardTitle}>Strengths & Focus</Text>
             <View style={styles.strengthRow}>
               <View style={styles.strengthItem}>
-                <Text style={styles.strengthLabel}>Strongest:</Text>
+                <Text style={styles.strengthLabel}>Strongest</Text>
                 <Text style={styles.strengthValue}>{progress.strongest || 'Addition'}</Text>
               </View>
+              <View style={styles.divider} />
               <View style={styles.strengthItem}>
-                <Text style={styles.strengthLabel}>Needs Focus:</Text>
+                <Text style={styles.strengthLabel}>Needs Focus</Text>
                 <Text style={styles.strengthValue}>{progress.focus_area || 'Division'}</Text>
               </View>
             </View>
           </View>
 
           {/* Profile Link */}
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => router.push('/parent/profile')}
-          >
-            <LinearGradient colors={['#A855F7', '#7C3AED']} style={styles.profileButtonGradient}>
-              <User size={20} color="#FFF" />
-              <Text style={styles.profileButtonText}>View Parent Profile</Text>
+          <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/parent/profile')}>
+            <LinearGradient colors={['#A855F7', '#7C3AED']} style={styles.profileBtnGrad}>
+              <User size={18} color="#FFF" />
+              <Text style={styles.profileBtnText}>View Parent Profile</Text>
             </LinearGradient>
           </TouchableOpacity>
+
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
 }
 
+function StatCard({ icon: Icon, color, value, label }) {
+  return (
+    <View style={styles.statCard}>
+      <Icon size={20} color={color} />
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: '#FFF', marginTop: 16, fontSize: 16 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  greeting: { fontSize: 24, fontWeight: 'bold', color: '#FFF' },
-  childName: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  logoutButton: { padding: 8 },
-  card: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 16, marginBottom: 16 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: '#FFF' },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
-  infoLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: '#FFF', marginTop: 12, fontSize: 15 },
+  scroll: { padding: 16, paddingBottom: 40 },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 20,
+  },
+  headerText: { flex: 1, marginRight: 12 },
+  greeting: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
+  subText: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  logoutBtn: { padding: 8 },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16, padding: 14, marginBottom: 14,
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  cardTitle: { fontSize: 15, fontWeight: '600', color: '#FFF' },
+  infoRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  infoLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 14 },
   infoValue: { color: '#FFF', fontSize: 14, fontWeight: '500' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
-  statCard: { width: '47%', borderRadius: 16, padding: 16, alignItems: 'center' },
-  statValue: { fontSize: 28, fontWeight: 'bold', color: '#FFF', marginTop: 8 },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-  progressBarContainer: { marginTop: 8 },
-  progressBar: { height: 12, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 6, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#22C55E', borderRadius: 6 },
-  progressText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 8, textAlign: 'center' },
-  strengthRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
+  statCard: {
+    width: '47%', flexGrow: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14, padding: 14, alignItems: 'center', gap: 6,
+  },
+  statValue: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
+  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
+  progressTrack: {
+    height: 10, backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 5, overflow: 'hidden', marginTop: 10,
+  },
+  progressFill: { height: '100%', backgroundColor: '#22C55E', borderRadius: 5 },
+  progressText: {
+    color: 'rgba(255,255,255,0.7)', fontSize: 12,
+    marginTop: 8, textAlign: 'center',
+  },
+  strengthRow: { flexDirection: 'row', marginTop: 10, gap: 12 },
   strengthItem: { flex: 1 },
-  strengthLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12 },
-  strengthValue: { color: '#FFF', fontSize: 16, fontWeight: '500', marginTop: 4 },
-  profileButton: { borderRadius: 12, overflow: 'hidden', marginTop: 8 },
-  profileButtonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, gap: 8 },
-  profileButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  divider: { width: 1, backgroundColor: 'rgba(255,255,255,0.15)' },
+  strengthLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 4 },
+  strengthValue: { color: '#FFF', fontSize: 15, fontWeight: '500' },
+  profileBtn: { borderRadius: 12, overflow: 'hidden', marginTop: 4 },
+  profileBtnGrad: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', padding: 14, gap: 8,
+  },
+  profileBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
 });

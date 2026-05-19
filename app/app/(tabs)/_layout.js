@@ -34,23 +34,28 @@ export default function TabLayout() {
         if (isMounted) setContestRank(null);
         return;
       }
-
       try {
         const data = await getContestLeaderboard();
         if (isMounted) {
           setContestRank(typeof data?.student_rank === 'number' ? data.student_rank : null);
         }
-      } catch (error) {
+      } catch {
         if (isMounted) setContestRank(null);
       }
     };
 
     loadRank();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [user, userLoading]);
+
+  // Tab label translations
+  const labels = {
+    home:    lang === 'hi' ? '\u0939\u094B\u092E'          : 'Home',
+    history: lang === 'hi' ? '\u091A\u0948\u091F'          : 'History',
+    explore: lang === 'hi' ? '\u0916\u094B\u091C\u0947\u0902' : 'Explore',
+    test:    lang === 'hi' ? '\u091F\u0947\u0938\u094D\u091F' : 'Test',
+    profile: lang === 'hi' ? '\u092A\u094D\u0930\u094B\u092B\u093C\u093E\u0907\u0932' : 'Profile',
+  };
 
   return (
     <Tabs
@@ -87,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: lang === 'hi' ? 'à¤¹à¥‹à¤®' : 'Home',
+          title: labels.home,
           tabBarIcon: ({ color, size }) => (
             <TabIcon color={color} size={size} Icon={Home} />
           ),
@@ -96,7 +101,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: lang === 'hi' ? 'à¤šà¥ˆà¤Ÿ' : 'History',
+          title: labels.history,
           tabBarIcon: ({ color, size }) => (
             <TabIcon color={color} size={size} Icon={MessageSquare} />
           ),
@@ -105,7 +110,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: lang === 'hi' ? 'à¤–à¥‹à¤œà¥‡à¤‚' : 'Explore',
+          title: labels.explore,
           tabBarIcon: ({ color, size }) => (
             <TabIcon color={color} size={size} Icon={Compass} />
           ),
@@ -114,7 +119,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="test"
         options={{
-          title: lang === 'hi' ? 'à¤Ÿà¥‡à¤¸à¥à¤Ÿ' : 'Test',
+          title: labels.test,
           tabBarIcon: ({ color, size }) => (
             <TabIcon
               color={color}
@@ -128,7 +133,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: lang === 'hi' ? 'à¤ªà¥à¤°à¥‹à¤«à¤¼à¤¾à¤‡à¤²' : 'Profile',
+          title: labels.profile,
           tabBarIcon: ({ color, size }) => (
             <TabIcon color={color} size={size} Icon={User} />
           ),

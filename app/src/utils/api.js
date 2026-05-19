@@ -65,6 +65,7 @@ export const sendToGemini = async (input, username) => {
       time_taken: input.time_taken || 0,
       sender: 'user',
       session_id: currentSessionId,
+      subject: input.subject || null,   // ← pass subject to backend
     };
 
     if (!username) throw new Error('Username is required');
@@ -105,6 +106,7 @@ export const sendCheckRequest = async (input, username) => {
       time_taken: input.time_taken || 0,
       sender: 'user',
       session_id: currentSessionId,
+      subject: input.subject || null,   // ← pass subject to backend
     };
 
     const response = await postRequest(`/chat/send/check/${username}`, payload);
