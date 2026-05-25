@@ -537,3 +537,42 @@ class VideoAdminOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ShortVideoBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    class_level: str
+    subject: str
+    is_public: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class ShortVideoUploadInit(ShortVideoBase):
+    filename: str
+    content_type: str
+
+
+class ShortVideoUploadComplete(BaseModel):
+    video_id: int
+    object_key: str
+    file_size: int
+    duration: float
+    codec_info: Optional[str] = None
+    thumbnail_key: Optional[str] = None
+
+
+class ShortVideoOut(ShortVideoBase):
+    id: int
+    object_key: str
+    file_url: Optional[str] = None
+    thumbnail_key: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    status: str
+    file_size: Optional[int] = None
+    duration: Optional[float] = None
+    user_id: int
+    created_at: str
+    updated_at: str

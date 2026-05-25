@@ -184,6 +184,7 @@ class Video(Base):
     id          = Column(Integer, primary_key=True, index=True)
     title       = Column(String, nullable=False)
     description = Column(Text, nullable=True)
+
     class_level = Column(String, nullable=False)
     subject     = Column(String, nullable=True)
     duration    = Column(Integer, nullable=True)
@@ -197,6 +198,48 @@ class Video(Base):
 
     upload_date = Column(String, nullable=False)
     view_count  = Column(Integer, default=0)
+
+# ---------- Short Video (CDN Backblaze B2) ----------
+class ShortVideo(Base):
+    __tablename__ = "short_videos"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    
+    # CORE CONTENT
+    title           = Column(String, nullable=False)
+    description     = Column(Text, nullable=True)
+    class_level     = Column(String, nullable=True, index=True)
+    subject         = Column(String, nullable=True, index=True)
+    
+    # CDN/STORAGE (B2)
+    object_key      = Column(String, nullable=False, unique=True, index=True)  # videos/{user_id}/{timestamp}_{filename}
+    file_url        = Column(String, nullable=True)  # CDN URL - can be computed, so optional storage
+    
+    # THUMBNAIL
+    thumbnail_key   = Column(String, nullable=True, unique=True)
+    thumbnail_url   = Column(String, nullable=True)
+    
+    # STATUS & CONTROL
+    status          = Column(String, default='uploading')  # 'uploading', 'completed', 'failed'
+    is_public       = Column(Boolean, default=False)  # True = public CDN, False = presigned
+    
+    # VIDEO METADATA
+    duration        = Column(Float, nullable=True)  # seconds
+    file_size       = Column(Integer, nullable=True)  # bytes
+    codec_info      = Column(Text, nullable=True)  # {"video": "h264", "audio": "aac"}
+    
+    # UPLOAD TRACKING
+    upload_id       = Column(String, nullable=True, index=True)  # For multipart uploads
+    user_id         = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # TIMESTAMPS
+    created_at      = Column(String, nullable=False)
+    updated_at      = Column(String, nullable=False)
+    
+    # OPTIONAL: Analytics (can add later if needed)
+    # view_count      = Column(Integer, default=0)
+    
+    user            = relationship("User")
 
 
 # ---------- Contest ----------
