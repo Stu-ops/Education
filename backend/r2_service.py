@@ -4,6 +4,7 @@ from botocore.client import Config
 from datetime import datetime
 from typing import Optional
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,17 @@ class R2Service:
             return presigned_url
         except Exception as e:
             logger.error(f"Error generating presigned download URL: {e}")
+            raise
+
+    def download_object_to_file(self, object_key: str, destination_path: Path) -> Path:
+        """Download an object from storage to a local path for backend processing."""
+        try:
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
+            self.s3_client.download_file(self.bucket_name, object_key, str(destination_path))
+            logger.info(f"Downloaded object for processing: {object_key}")
+            return destination_path
+        except Exception as e:
+            logger.error(f"Error downloading object {object_key}: {e}")
             raise
 
     def get_cdn_url(self, object_key: str) -> str:

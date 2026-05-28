@@ -222,6 +222,11 @@ class ShortVideo(Base):
     # STATUS & CONTROL
     status          = Column(String, default='uploading')  # 'uploading', 'completed', 'failed'
     is_public       = Column(Boolean, default=False)  # True = public CDN, False = presigned
+    moderation_status = Column(String, nullable=True)
+    moderation_result_json = Column(Text, nullable=True)
+    moderation_score = Column(Float, nullable=True)
+    moderation_reason = Column(Text, nullable=True)
+    moderated_at = Column(String, nullable=True)
     
     # VIDEO METADATA
     duration        = Column(Float, nullable=True)  # seconds

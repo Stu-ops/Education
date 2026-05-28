@@ -86,6 +86,21 @@ def ensure_new_columns():
             if "is_flagged" not in video_cols:
                 migrations.append("ALTER TABLE videos ADD COLUMN is_flagged INTEGER DEFAULT 0")
 
+            # short_videos table - moderation fields
+            res = conn.execute(text("PRAGMA table_info('short_videos')")).mappings().all()
+            short_video_cols = [r["name"] for r in res]
+            if short_video_cols:
+                if "moderation_status" not in short_video_cols:
+                    migrations.append("ALTER TABLE short_videos ADD COLUMN moderation_status TEXT")
+                if "moderation_result_json" not in short_video_cols:
+                    migrations.append("ALTER TABLE short_videos ADD COLUMN moderation_result_json TEXT")
+                if "moderation_score" not in short_video_cols:
+                    migrations.append("ALTER TABLE short_videos ADD COLUMN moderation_score REAL")
+                if "moderation_reason" not in short_video_cols:
+                    migrations.append("ALTER TABLE short_videos ADD COLUMN moderation_reason TEXT")
+                if "moderated_at" not in short_video_cols:
+                    migrations.append("ALTER TABLE short_videos ADD COLUMN moderated_at TEXT")
+
             for stmt in migrations:
                 conn.execute(text(stmt))
             conn.commit()

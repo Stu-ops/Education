@@ -1,20 +1,25 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel
-from models.models import Video, Teacher
-from models.schemas import VideoOut, VideoBase
-from helper import get_db
-from auth import verify_token
-from r2_service import get_r2_service
+
 import logging
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from auth import verify_token
+from helper import get_db
+from models.models import Admin, ShortVideo, Teacher
+from models.schemas import ShortVideoOut
+from r2_service import get_r2_service
+from video_moderation_tasks import run_video_moderation_job
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
-# Request/Response Models
+COMPLETED_STATUS = "completed"
+
+
 class PresignedUploadURLRequest(BaseModel):
     title: str
     description: Optional[str] = None
@@ -24,11 +29,13 @@ class PresignedUploadURLRequest(BaseModel):
     filename: str
     content_type: str
 
+
 class PresignedUploadURLResponse(BaseModel):
     upload_url: str
     object_key: str
     upload_expires_in_seconds: int
     video_id: int
+
 
 class CompleteUploadRequest(BaseModel):
     video_id: int
@@ -38,301 +45,314 @@ class CompleteUploadRequest(BaseModel):
     codec_info: Optional[str] = None
     thumbnail_key: Optional[str] = None
 
+
 class PresignedDownloadURLResponse(BaseModel):
     download_url: str
     expires_in_seconds: int
 
+
 class CDNURLResponse(BaseModel):
     cdn_url: str
 
-# GET /videos - List all videos with filters
-@router.get("", response_model=List[VideoOut])
+
+class ModerationStatusResponse(BaseModel):
+    video_id: int
+    status: str
+    moderation_status: Optional[str] = None
+    moderation_score: Optional[float] = None
+    moderation_reason: Optional[str] = None
+    moderated_at: Optional[str] = None
+
+
+def _get_teacher_or_401(username: str, db: Session) -> Teacher:
+    teacher = db.query(Teacher).filter(Teacher.username == username).first()
+    if not teacher:
+        raise HTTPException(status_code=401, detail="Not authenticated as teacher")
+    if not teacher.is_active:
+        raise HTTPException(status_code=403, detail="Teacher account is suspended")
+    return teacher
+
+
+def _ensure_owner(video: ShortVideo, teacher: Teacher) -> None:
+    if video.user_id != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this video")
+
+
+def _ensure_playable(video: ShortVideo) -> None:
+    if video.status != COMPLETED_STATUS:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Video is not playable until moderation completes. Current status: {video.status}",
+        )
+
+
+def _is_admin(username: str, db: Session) -> bool:
+    return db.query(Admin).filter(Admin.username == username).first() is not None
+
+
+@router.get("", response_model=List[ShortVideoOut])
 async def list_videos(
     db: Session = Depends(get_db),
     class_level: Optional[str] = Query(None),
     subject: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100)
+    limit: int = Query(20, ge=1, le=100),
 ):
-    """List all public videos with optional filtering"""
-    query = db.query(Video).filter(Video.is_public == "true")
-    
-    if class_level:
-        query = query.filter(Video.class_level == class_level)
-    if subject:
-        query = query.filter(Video.subject == subject)
-    
-    videos = query.offset(skip).limit(limit).all()
-    return videos
+    """List public videos that passed moderation."""
+    query = db.query(ShortVideo).filter(
+        ShortVideo.is_public == True,
+        ShortVideo.status == COMPLETED_STATUS,
+    )
 
-# GET /videos/me/my-videos - Get teacher's videos
-@router.get("/me/my-videos", response_model=List[VideoOut])
+    if class_level:
+        query = query.filter(ShortVideo.class_level == class_level)
+    if subject:
+        query = query.filter(ShortVideo.subject == subject)
+
+    return query.offset(skip).limit(limit).all()
+
+
+@router.get("/me/my-videos", response_model=List[ShortVideoOut])
 async def get_my_videos(
-    token_data = Depends(verify_token),
+    username: str = Depends(verify_token),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100)
+    limit: int = Query(20, ge=1, le=100),
 ):
-    """Get videos uploaded by the authenticated teacher"""
-    teacher_id = token_data.get("teacher_id")
-    if not teacher_id:
-        raise HTTPException(status_code=401, detail="Not authenticated as teacher")
-    
-    videos = db.query(Video).filter(
-        Video.teacher_id == teacher_id
-    ).offset(skip).limit(limit).all()
-    
-    return videos
+    """Get CDN videos uploaded by the authenticated teacher."""
+    teacher = _get_teacher_or_401(username, db)
+    return (
+        db.query(ShortVideo)
+        .filter(ShortVideo.user_id == teacher.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
-# GET /videos/{id} - Get video metadata
-@router.get("/{video_id}", response_model=VideoOut)
-async def get_video(
-    video_id: int,
-    db: Session = Depends(get_db)
-):
-    """Get video metadata by ID"""
-    video = db.query(Video).filter(Video.id == video_id).first()
-    if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
-    return video
 
-# POST /videos/presigned-upload-url - Generate upload URL
 @router.post("/presigned-upload-url", response_model=PresignedUploadURLResponse)
 async def generate_presigned_upload_url(
     request: PresignedUploadURLRequest,
-    token_data = Depends(verify_token),
+    username: str = Depends(verify_token),
     db: Session = Depends(get_db),
-    r2_service = Depends(get_r2_service)
+    r2_service=Depends(get_r2_service),
 ):
-    """Generate presigned URL for video upload"""
-    teacher_id = token_data.get("teacher_id")
-    if not teacher_id:
-        raise HTTPException(status_code=401, detail="Not authenticated as teacher")
-    
-    # Verify teacher exists
-    teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
-    if not teacher:
-        raise HTTPException(status_code=404, detail="Teacher not found")
-    
+    """Create an uploading row and return a direct-to-storage upload URL."""
+    teacher = _get_teacher_or_401(username, db)
+
+    if not request.content_type.startswith("video/"):
+        raise HTTPException(status_code=415, detail=f"Unsupported media type: {request.content_type}")
+
     try:
-        # Create Video record in database with status=uploading
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        object_key = f"videos/{teacher_id}/{timestamp}_{request.filename}"
-        
-        video = Video(
+        now = datetime.utcnow().isoformat()
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        object_key = f"videos/{teacher.id}/{timestamp}_{request.filename}"
+
+        video = ShortVideo(
             title=request.title,
             description=request.description or "",
-            teacher_id=teacher_id,
+            user_id=teacher.id,
             class_level=request.class_level,
             subject=request.subject,
-            is_public=str(request.is_public).lower(),
+            is_public=request.is_public,
             object_key=object_key,
             status="uploading",
-            upload_id=None
+            moderation_status=None,
+            created_at=now,
+            updated_at=now,
         )
         db.add(video)
-        db.commit()
-        db.refresh(video)
-        
-        # Generate presigned upload URL
+        db.flush()
+
         upload_url = r2_service.generate_presigned_upload_url(
             object_key=object_key,
             content_type=request.content_type,
-            expires_in=3600  # 1 hour
+            expires_in=3600,
         )
-        
-        logger.info(f"Generated presigned upload URL for teacher {teacher_id}: {object_key}")
-        
+
+        db.commit()
+        db.refresh(video)
+
         return PresignedUploadURLResponse(
             upload_url=upload_url,
             object_key=object_key,
             upload_expires_in_seconds=3600,
-            video_id=video.id
+            video_id=video.id,
         )
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        logger.error(f"Error generating presigned URL: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating upload URL: {str(e)}")
+        logger.error("Error generating presigned URL: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Error generating upload URL: {exc}")
 
-# POST /videos/complete-upload - Finalize upload
-@router.post("/complete-upload", response_model=VideoOut)
+
+@router.post("/complete-upload", response_model=ShortVideoOut)
 async def complete_upload(
     request: CompleteUploadRequest,
-    token_data = Depends(verify_token),
-    db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    username: str = Depends(verify_token),
+    db: Session = Depends(get_db),
 ):
-    """Complete video upload and store metadata"""
-    teacher_id = token_data.get("teacher_id")
-    if not teacher_id:
-        raise HTTPException(status_code=401, detail="Not authenticated as teacher")
-    
+    """Finalize metadata, quarantine the upload, and start moderation."""
+    teacher = _get_teacher_or_401(username, db)
+
     try:
-        video = db.query(Video).filter(Video.id == request.video_id).first()
+        video = db.query(ShortVideo).filter(ShortVideo.id == request.video_id).first()
         if not video:
             raise HTTPException(status_code=404, detail="Video not found")
-        
-        # Verify ownership
-        if video.teacher_id != teacher_id:
-            raise HTTPException(status_code=403, detail="Not authorized to complete this upload")
-        
-        # Update video record
-        video.object_key = request.object_key
-        video.status = "completed"
+
+        _ensure_owner(video, teacher)
+
+        if video.object_key != request.object_key:
+            raise HTTPException(status_code=400, detail="Object key does not match the upload session")
+
+        now = datetime.utcnow().isoformat()
+        video.file_size = request.file_size
+        video.duration = request.duration
         video.codec_info = request.codec_info
         video.thumbnail_key = request.thumbnail_key
-        video.duration = request.duration
-        
+        video.status = "pending_moderation"
+        video.moderation_status = "PENDING"
+        video.moderation_reason = None
+        video.updated_at = now
+
         db.commit()
         db.refresh(video)
-        
-        logger.info(f"Completed upload for video {video.id} by teacher {teacher_id}")
-        
+
+        background_tasks.add_task(run_video_moderation_job, video.id)
+        logger.info("Queued moderation for ShortVideo %s", video.id)
         return video
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        logger.error(f"Error completing upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error completing upload: {str(e)}")
+        logger.error("Error completing upload: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Error completing upload: {exc}")
 
-# GET /videos/{id}/presigned-download-url - Generate download URL
+
+@router.get("/{video_id}/moderation-status", response_model=ModerationStatusResponse)
+async def get_moderation_status(
+    video_id: int,
+    username: str = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    """Return moderation status for the owner or an admin."""
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    teacher = db.query(Teacher).filter(Teacher.username == username).first()
+    if not _is_admin(username, db):
+        if not teacher:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        _ensure_owner(video, teacher)
+
+    return ModerationStatusResponse(
+        video_id=video.id,
+        status=video.status,
+        moderation_status=video.moderation_status,
+        moderation_score=video.moderation_score,
+        moderation_reason=video.moderation_reason,
+        moderated_at=video.moderated_at,
+    )
+
+
 @router.get("/{video_id}/presigned-download-url", response_model=PresignedDownloadURLResponse)
 async def get_presigned_download_url(
     video_id: int,
-    token_data = Depends(verify_token),
+    username: str = Depends(verify_token),
     db: Session = Depends(get_db),
-    r2_service = Depends(get_r2_service)
+    r2_service=Depends(get_r2_service),
 ):
-    """Generate presigned download URL for private videos"""
-    teacher_id = token_data.get("teacher_id")
-    
-    try:
-        video = db.query(Video).filter(Video.id == video_id).first()
-        if not video:
-            raise HTTPException(status_code=404, detail="Video not found")
-        
-        # Check if video is private
-        if video.is_public == "true":
-            # Public videos use CDN URL instead
-            raise HTTPException(status_code=400, detail="Use /cdn-url for public videos")
-        
-        # Verify user has permission (owner or admin)
-        if video.teacher_id != teacher_id:
-            raise HTTPException(status_code=403, detail="Not authorized to access this video")
-        
-        download_url = r2_service.generate_presigned_download_url(
-            object_key=video.object_key,
-            expires_in=3600  # 1 hour
-        )
-        
-        logger.info(f"Generated presigned download URL for video {video_id}")
-        
-        return PresignedDownloadURLResponse(
-            download_url=download_url,
-            expires_in_seconds=3600
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error generating download URL: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating download URL: {str(e)}")
+    """Generate a private download URL for completed owner videos."""
+    teacher = _get_teacher_or_401(username, db)
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
 
-# GET /videos/{id}/cdn-url - Get public CDN URL
+    _ensure_owner(video, teacher)
+    _ensure_playable(video)
+
+    if video.is_public:
+        raise HTTPException(status_code=400, detail="Use /cdn-url for public videos")
+
+    download_url = r2_service.generate_presigned_download_url(video.object_key, expires_in=3600)
+    return PresignedDownloadURLResponse(download_url=download_url, expires_in_seconds=3600)
+
+
 @router.get("/{video_id}/cdn-url", response_model=CDNURLResponse)
 async def get_cdn_url(
     video_id: int,
     db: Session = Depends(get_db),
-    r2_service = Depends(get_r2_service)
+    r2_service=Depends(get_r2_service),
 ):
-    """Get public CDN URL for video (public videos only)"""
-    try:
-        video = db.query(Video).filter(Video.id == video_id).first()
-        if not video:
-            raise HTTPException(status_code=404, detail="Video not found")
-        
-        # Check if video is public
-        if video.is_public != "true":
-            raise HTTPException(status_code=403, detail="Video is not public")
-        
-        cdn_url = r2_service.get_cdn_url(video.object_key)
-        
-        logger.info(f"Retrieved CDN URL for video {video_id}")
-        
-        return CDNURLResponse(cdn_url=cdn_url)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting CDN URL: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting CDN URL: {str(e)}")
+    """Get public CDN URL for public videos that passed moderation."""
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
 
-# DELETE /videos/{id} - Delete video
+    if not video.is_public:
+        raise HTTPException(status_code=403, detail="Video is not public")
+    _ensure_playable(video)
+
+    return CDNURLResponse(cdn_url=r2_service.get_cdn_url(video.object_key))
+
+
 @router.delete("/{video_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_video(
     video_id: int,
-    token_data = Depends(verify_token),
+    username: str = Depends(verify_token),
     db: Session = Depends(get_db),
-    r2_service = Depends(get_r2_service)
+    r2_service=Depends(get_r2_service),
 ):
-    """Delete video and remove from R2"""
-    teacher_id = token_data.get("teacher_id")
-    if not teacher_id:
-        raise HTTPException(status_code=401, detail="Not authenticated as teacher")
-    
+    """Delete a CDN video and its storage objects."""
+    teacher = _get_teacher_or_401(username, db)
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    _ensure_owner(video, teacher)
+
     try:
-        video = db.query(Video).filter(Video.id == video_id).first()
-        if not video:
-            raise HTTPException(status_code=404, detail="Video not found")
-        
-        # Verify ownership
-        if video.teacher_id != teacher_id:
-            raise HTTPException(status_code=403, detail="Not authorized to delete this video")
-        
-        # Delete from R2
-        r2_service.delete_object(video.object_key)
-        
-        # Delete thumbnail if exists
+        try:
+            r2_service.delete_object(video.object_key)
+        except Exception as exc:
+            logger.warning("Could not delete video object %s: %s", video.object_key, exc)
+
         if video.thumbnail_key:
-            r2_service.delete_object(video.thumbnail_key)
-        
-        # Delete database record
+            try:
+                r2_service.delete_object(video.thumbnail_key)
+            except Exception as exc:
+                logger.warning("Could not delete thumbnail object %s: %s", video.thumbnail_key, exc)
+
         db.delete(video)
         db.commit()
-        
-        logger.info(f"Deleted video {video_id} by teacher {teacher_id}")
-        
         return None
-    except HTTPException:
-        raise
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        logger.error(f"Error deleting video: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error deleting video: {str(e)}")
+        logger.error("Error deleting video: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Error deleting video: {exc}")
 
-# POST /videos/{id}/view - Increment view count
-@router.post("/{video_id}/view", response_model=VideoOut)
+
+@router.post("/{video_id}/view", response_model=ShortVideoOut)
 async def increment_view_count(
     video_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Increment view count for a video"""
-    try:
-        video = db.query(Video).filter(Video.id == video_id).first()
-        if not video:
-            raise HTTPException(status_code=404, detail="Video not found")
-        
-        # Increment view count (assuming views field exists in Video model)
-        if hasattr(video, 'views'):
-            video.views = (video.views or 0) + 1
-        
-        db.commit()
-        db.refresh(video)
-        
-        logger.info(f"Incremented view count for video {video_id}")
-        
-        return video
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Error incrementing view count: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error updating view count: {str(e)}")
+    """Compatibility endpoint; ShortVideo does not currently store view counts."""
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    _ensure_playable(video)
+    return video
+
+
+@router.get("/{video_id}", response_model=ShortVideoOut)
+async def get_video(video_id: int, db: Session = Depends(get_db)):
+    """Get public metadata for a completed public CDN video."""
+    video = db.query(ShortVideo).filter(ShortVideo.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if not video.is_public:
+        raise HTTPException(status_code=403, detail="Video is not public")
+    _ensure_playable(video)
+    return video

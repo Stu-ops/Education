@@ -571,6 +571,10 @@ class ShortVideoOut(ShortVideoBase):
     thumbnail_key: Optional[str] = None
     thumbnail_url: Optional[str] = None
     status: str
+    moderation_status: Optional[str] = None
+    moderation_score: Optional[float] = None
+    moderation_reason: Optional[str] = None
+    moderated_at: Optional[str] = None
     file_size: Optional[int] = None
     duration: Optional[float] = None
     user_id: int
